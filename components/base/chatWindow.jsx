@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import socket from "@/utils/socketClient";
 
 const ChatWindow = () => {
   const [messages, setMessages] = useState([
@@ -11,9 +12,13 @@ const ChatWindow = () => {
   ]);
   const [input, setInput] = useState("");
 
+  useEffect(() => {
+  }, []);
+
   const sendMessage = () => {
     if (!input.trim()) return;
 
+    socket.emit("test", {})
     setMessages([...messages, { id: Date.now(), text: input, sender: "You" }]);
     setInput("");
   };
@@ -36,7 +41,9 @@ const ChatWindow = () => {
           >
             <div
               className={`px-4 py-2 rounded-lg ${
-                message.sender === "You" ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-700"
+                message.sender === "You"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 dark:bg-gray-700"
               }`}
             >
               {message.text}
