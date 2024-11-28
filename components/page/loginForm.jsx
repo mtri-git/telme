@@ -1,9 +1,11 @@
-'use client';
+"use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import authService from "@/services/authService";
+import toast, { Toaster } from "react-hot-toast";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -16,40 +18,57 @@ const LoginForm = () => {
 
     try {
       console.log("Logging in with", email, password);
+      await toast.promise(authService.login(email, password), {
+        loading: "Logging in...",
+        success: "Logged in successfully",
+        error: (err) => {
+          console.log("🚀 ~ toast.promise ~ err:", err)
+          setError(err?.response?.data?.message);
+          return "An error occurred";
+        }
+      });
+      
+      // sleep for 1 second
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // go to home
+      window.location.href = "/";
     } catch (err) {
       setError("An unexpected error occurred");
     }
   };
 
   return (
-    <form onSubmit={handleLogin} className="max-w-md mx-auto space-y-4">
-      <div>
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
-          required
-        />
-      </div>
-      <div>
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter your password"
-          required
-        />
-      </div>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      <Button type="submit" className="w-full">
-        Login
-      </Button>
-    </form>
+    <>
+      <Toaster />
+      <form onSubmit={handleLogin} className="max-w-md mx-auto space-y-4">
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            required
+          />
+        </div>
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+        <Button type="submit" className="w-full">
+          Login
+        </Button>
+      </form>
+    </>
   );
 };
 
