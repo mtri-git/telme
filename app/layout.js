@@ -1,4 +1,5 @@
 // import localFont from "next/font/local";
+import { SocketProvider } from "@/context/socketContext";
 import "./globals.css";
 import ThemeToggle from "@/components/base/themeToggle";
 
@@ -29,7 +30,9 @@ export default function RootLayout({ children }) {
           <ThemeToggle />
         </div>
         <div />
-        {children}
+        <SocketProvider>
+          {children}
+        </SocketProvider>
       </body>
     </html>
   );
