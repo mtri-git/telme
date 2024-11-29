@@ -57,11 +57,12 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = LOCAL_STORAGE_KEY.getItem(LOCAL_STORAGE_KEY.refreshToken);
-        const { data } = await axios.post(REFRESH_TOKEN_URL, { refreshToken });
+        const refreshToken = localStorage.getItem(LOCAL_STORAGE_KEY.refreshToken);
+        const { data } = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + REFRESH_TOKEN_URL, { refreshToken });
+        const responseData = data.data
 
-        localStorage.setItem(LOCAL_STORAGE_KEY.accessToken, data.tokens.accessToken);
-        localStorage.setItem(LOCAL_STORAGE_KEY.refreshToken, data.tokens.refreshToken);
+        localStorage.setItem(LOCAL_STORAGE_KEY.accessToken, responseData.tokens.accessToken);
+        localStorage.setItem(LOCAL_STORAGE_KEY.refreshToken, responseData.tokens.refreshToken);
 
         axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
 
@@ -69,6 +70,7 @@ axiosInstance.interceptors.response.use(
 
         return axiosInstance(originalRequest);
       } catch (err) {
+        console.log("🚀 ~ err:", err)
         processQueue(err, null);
 
         localStorage.removeItem(LOCAL_STORAGE_KEY.accessToken);

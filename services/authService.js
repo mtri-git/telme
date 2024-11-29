@@ -25,6 +25,7 @@ const login = async (email, password) => {
       LOCAL_STORAGE_KEY.refreshToken,
       data.tokens.refreshToken
     );
+    localStorage.setItem(LOCAL_STORAGE_KEY.userInfo, JSON.stringify(data.user));
 
     axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
 
@@ -38,8 +39,8 @@ const login = async (email, password) => {
 const logout = async () => {
   try {
     // await axios.post("/auth/logout");
-    LOCAL_STORAGE_KEY.removeItem(LOCAL_STORAGE_KEY.accessToken);
-    LOCAL_STORAGE_KEY.removeItem(LOCAL_STORAGE_KEY.refreshToken);
+    localStorage.removeItem(LOCAL_STORAGE_KEY.accessToken);
+    localStorage.removeItem(LOCAL_STORAGE_KEY.refreshToken);
   } catch (err) {
     throw err;
   }
@@ -47,7 +48,7 @@ const logout = async () => {
 
 const getMe = async () => {
   try {
-    const response = await axiosInstance.get("/auth/me");
+    const response = await axiosInstance.get("/users/me");
     return response.data;
   } catch (err) {
     throw err;
