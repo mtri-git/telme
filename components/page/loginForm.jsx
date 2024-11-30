@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import authService from "@/services/authService";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -39,7 +39,6 @@ const LoginForm = () => {
 
   return (
     <>
-      <Toaster />
       <form onSubmit={handleLogin} className="max-w-md mx-auto space-y-4">
         <div>
           <Label htmlFor="email">Email</Label>

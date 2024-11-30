@@ -6,6 +6,7 @@ import { Plus, LogOut } from "lucide-react";
 import { Card } from "../ui/card";
 import authService from "@/services/authService";
 import useAuthStore from "@/store/authStore";
+import { CreateRoomDialog } from "../dialog/createRoomDialog";
 
 const Sidebar = () => {
 
@@ -43,9 +44,7 @@ const Sidebar = () => {
     <aside className="flex flex-col w-64 bg-gray-100 border-r h-full p-4 dark:bg-gray-950">
       <h2 className="text-lg font-bold mb-4">
         <span>Chats</span>
-        <Button variant="primary" className="float-right">
-          <Plus size={24} />
-        </Button>
+        <CreateRoomDialog />
         </h2>
       <ul className="space-y-2">
         {
@@ -55,7 +54,7 @@ const Sidebar = () => {
           error && <p>Error: {error}</p>
         }
         {rooms && rooms?.map((room) => (
-          <li className="p-1" key={room._id} onClick={ () => onClickRoomItem(room._id)}>
+          <li key={room._id} onClick={ () => onClickRoomItem(room._id)}>
             <Card>
             <Button variant="ghost" className="w-full justify-start">
               {room.name}

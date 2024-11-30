@@ -2,6 +2,7 @@
 import { SocketProvider } from "@/context/socketContext";
 import "./globals.css";
 import ThemeToggle from "@/components/base/themeToggle";
+import { Toaster } from "react-hot-toast";
 
 // const geistSans = localFont({
 //   src: "./fonts/GeistVF.woff",
@@ -26,7 +27,8 @@ export default function RootLayout({ children }) {
         // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         className="min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white relative"
       >
-        <div className="fixed top-4 right-4 z-50">
+        <Toaster />
+        <div className="fixed top-2 right-4 z-50">
           <ThemeToggle />
         </div>
         <div />
