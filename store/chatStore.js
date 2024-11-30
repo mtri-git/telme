@@ -8,11 +8,14 @@ const useChatStore = create(
         (set) => ({
           currentRoomId: null,
           currentRoomData: null,
+          isOpenOption: false,
           rooms: [],
           loading: false,
           error: null,
 
           setCurrentRoomId: (roomId) => set({ currentRoomId: roomId }),
+
+          toggleOption: () => set((state) => ({ isOpenOption: !state.isOpenOption })),
 
           setCurrentRoomData: (roomData) => set({ currentRoomData: roomData }),
 
@@ -68,8 +71,11 @@ const useChatStore = create(
         rooms: [],
         loading: false,
         error: null,
+        isOpenOption: false,
 
         setCurrentRoomId: (roomId) => set({ currentRoomId: roomId }),
+
+        toggleOption: () => set((state) => ({ isOpenOption: !state.isOpenOption })),
 
         setCurrentRoomData: (roomData) => set({ currentRoomData: roomData }),
 

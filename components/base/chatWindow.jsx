@@ -9,15 +9,15 @@ import useAuthStore from "@/store/authStore";
 import useMessage from "@/hooks/useMessage";
 import ChatItem from "./chatItem";
 import { v4 as uuidv4 } from "uuid";
+import { Ellipsis } from "lucide-react";
 
 const ChatWindow = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const { currentRoomId, currentRoomData } = useChatStore();
+  const { currentRoomId, currentRoomData, toggleOption } = useChatStore();
   const typingTimeoutRef = useRef(null);
   const [typingUsers, setTypingUsers] = useState([]);
-  const { messages, addNewMessage, loadMoreMessage } =
-    useMessage(currentRoomId);
+  const { messages, addNewMessage, loadMoreMessage } = useMessage(currentRoomId);
   const messageListRef = useRef(null);
   const userAuthData = useAuthStore((state) => state.user);
 
@@ -34,7 +34,7 @@ const ChatWindow = () => {
   useEffect(() => {
     const handleReceiveMessage = (data) => {
       const { userId, message, sender } = data;
-      console.log("🚀 ~ handleReceiveMessage ~ sender:", sender)
+      console.log("🚀 ~ handleReceiveMessage ~ sender:", sender);
 
       const currentUserId = userAuthData?.user?._id;
       if (userId === currentUserId) return;
@@ -44,7 +44,7 @@ const ChatWindow = () => {
         content: message,
         is_sender: false,
         created_at: new Date(),
-        sender
+        sender,
       });
     };
 
@@ -104,7 +104,10 @@ const ChatWindow = () => {
       sender: userAuthData?.user,
     });
 
-    socket.emit("stop_room_typing", { roomId: currentRoomId, sender: userAuthData?.user }); // Báo ngừng typing khi gửi tin nhắn
+    socket.emit("stop_room_typing", {
+      roomId: currentRoomId,
+      sender: userAuthData?.user,
+    }); // Báo ngừng typing khi gửi tin nhắn
 
     addNewMessage({
       _id: Date.now(),
@@ -121,7 +124,10 @@ const ChatWindow = () => {
     setInput(e.target.value);
 
     if (!isTyping) {
-      socket.emit("room_typing", { roomId: currentRoomId, sender: userAuthData?.user });
+      socket.emit("room_typing", {
+        roomId: currentRoomId,
+        sender: userAuthData?.user,
+      });
       setIsTyping(true);
     }
 
@@ -132,26 +138,33 @@ const ChatWindow = () => {
 
     typingTimeoutRef.current = setTimeout(() => {
       console.log("Stop typing");
-      socket.emit("stop_room_typing", { roomId: currentRoomId, sender: userAuthData?.user });
+      socket.emit("stop_room_typing", {
+        roomId: currentRoomId,
+        sender: userAuthData?.user,
+      });
       setIsTyping(false);
     }, 2000);
   };
 
   const getSenderNames = () => {
-    return typingUsers.map((data) => {
-      return data.fullname;
-    }).join(", ");
-  }
+    return typingUsers
+      .map((data) => {
+        return data.fullname;
+      })
+      .join(", ");
+  };
 
   return (
     <div className="flex flex-col flex-1 h-full">
       {/* Header */}
       {currentRoomData && (
-        <div className="p-4 border-b bg-white dark:bg-gray-950">
+        <div className="flex gap-2 p-4 border-b bg-white dark:bg-gray-950">
           <h1 className="text-lg font-bold">
-            <span>Chat with {currentRoomData?.name}</span>
-            
+            Chat with {currentRoomData?.name}
           </h1>
+          <Button variant="primary" onClick={toggleOption}>
+            <Ellipsis />
+          </Button>
         </div>
       )}
 
@@ -169,31 +182,18 @@ const ChatWindow = () => {
           className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900"
         >
           {messages &&
-            [...messages].slice().reverse().map((message) => (
-              <ChatItem
-                key={uuidv4()}
-                content={message.content}
-                sender={message?.sender?.fullname}
-                isSender={message.is_sender}
-                createdAt={message.created_at}
-              />
-              // <div
-              //   key={message._id}
-              //   className={`flex ${
-              //     message.is_sender ? "justify-end" : "justify-start"
-              //   }`}
-              // >
-              //   <div
-              //     className={`px-4 py-2 rounded-lg ${
-              //       message.is_sender
-              //         ? "bg-blue-500 text-white"
-              //         : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
-              //     }`}
-              //   >
-              //     {message?.content}
-              //   </div>
-              // </div>
-            ))}
+            [...messages]
+              .slice()
+              .reverse()
+              .map((message) => (
+                <ChatItem
+                  key={uuidv4()}
+                  content={message.content}
+                  sender={message?.sender?.fullname}
+                  isSender={message.is_sender}
+                  createdAt={message.created_at}
+                />
+              ))}
           {typingUsers.length > 0 && (
             <p className="text-sm italic text-gray-500">
               {getSenderNames()} is typing...

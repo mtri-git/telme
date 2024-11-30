@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import socket from "@/utils/socketClient";
 import useAuthStore from "@/store/authStore";
 import authService from "@/services/authService";
+import ChatOption from "../base/chatOption";
 
 const HomePage = () => {
   const { setUser } = useAuthStore();
@@ -34,6 +35,8 @@ const HomePage = () => {
       <Sidebar />
       {/* Chat Window */}
       <ChatWindow />
+      {/* Chat option */}
+      <ChatOption />
     </div>
   );
 };
