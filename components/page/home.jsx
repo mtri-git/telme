@@ -5,10 +5,9 @@ import { useEffect } from "react";
 import socket from "@/utils/socketClient";
 import useAuthStore from "@/store/authStore";
 import authService from "@/services/authService";
-import { Loading } from "../base/loading";
 
 const HomePage = () => {
-  const { setUser, user, isAuthenticated } = useAuthStore();
+  const { setUser } = useAuthStore();
 
   useEffect(() => {
     authService.getMe().then((data) => {
@@ -24,18 +23,10 @@ const HomePage = () => {
       });
     });
 
-    console.log("HomePage -> user", user, isAuthenticated);
-
     return () => {
       socket.disconnect();
     };
   }, [setUser]);
-
-  if (!user) {
-    return (
-      <Loading className="h-screen"/>
-    )
-  }
 
   return (
     <div className="flex h-screen">

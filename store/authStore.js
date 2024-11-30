@@ -7,7 +7,10 @@ const useAuthStore = create(
         (set) => ({
           user: null,
           isAuthenticated: false,
+          isLoading: false,
 
+          setIsLoading: (isLoading) => set({ isLoading }),
+          
           setUser: (user) =>
             {
               console.log("auth/setUser", user);

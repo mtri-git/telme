@@ -149,7 +149,8 @@ const ChatWindow = () => {
       {currentRoomData && (
         <div className="p-4 border-b bg-white dark:bg-gray-950">
           <h1 className="text-lg font-bold">
-            Chat with {currentRoomData?.name}
+            <span>Chat with {currentRoomData?.name}</span>
+            
           </h1>
         </div>
       )}

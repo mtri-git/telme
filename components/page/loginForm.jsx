@@ -1,16 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import authService from "@/services/authService";
 import toast from "react-hot-toast";
+import useAuthStore from "@/store/authStore";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { user, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    console.log("User is already logged in", user);
+    if (user) {
+      window.location.href = "/";
+    }
+  }, [user]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
