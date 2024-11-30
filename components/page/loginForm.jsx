@@ -29,7 +29,7 @@ const LoginForm = () => {
       });
       
       // sleep for 1 second
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       // go to home
       window.location.href = "/";
     } catch (err) {

@@ -1,22 +1,41 @@
-'use client';
+"use client";
 import Sidebar from "@/components/base/sidebar";
 import ChatWindow from "@/components/base/chatWindow";
 import { useEffect } from "react";
 import socket from "@/utils/socketClient";
+import useAuthStore from "@/store/authStore";
+import authService from "@/services/authService";
+import { Loading } from "../base/loading";
 
 const HomePage = () => {
-  
-  useEffect(() => {
-    socket.connect();
+  const { setUser, user, isAuthenticated } = useAuthStore();
 
-    socket.emit("register", {
-      userId: "123"
+  useEffect(() => {
+    authService.getMe().then((data) => {
+      console.log("🚀 ~ authService.getMe ~ data:", data);
+      if (!data) {
+        router.push("/login");
+      }
+      const userData = data.data
+      setUser({ user: userData, isAuthenticated: true });
+      socket.connect();
+      socket.emit("register", {
+        userId: userData?._id,
+      });
     });
+
+    console.log("HomePage -> user", user, isAuthenticated);
 
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [setUser]);
+
+  if (!user) {
+    return (
+      <Loading className="h-screen"/>
+    )
+  }
 
   return (
     <div className="flex h-screen">

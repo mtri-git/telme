@@ -15,7 +15,6 @@ const login = async (email, password) => {
       password,
     });
     const { data } = response.data;
-    console.log("🚀 ~ login ~ data:", data);
 
     localStorage.setItem(
       LOCAL_STORAGE_KEY.accessToken,
@@ -38,9 +37,9 @@ const login = async (email, password) => {
 
 const logout = async () => {
   try {
-    // await axios.post("/auth/logout");
     localStorage.removeItem(LOCAL_STORAGE_KEY.accessToken);
     localStorage.removeItem(LOCAL_STORAGE_KEY.refreshToken);
+    window.location.href = "/login";
   } catch (err) {
     throw err;
   }
