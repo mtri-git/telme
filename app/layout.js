@@ -4,6 +4,7 @@ import "./globals.css";
 import ThemeToggle from "@/components/base/themeToggle";
 import { Toaster } from "react-hot-toast";
 import MainLayout from "@/components/layout/MainLayout";
+import { AuthProvider } from "@/context/authContext";
 
 // const geistSans = localFont({
 //   src: "./fonts/GeistVF.woff",
@@ -34,9 +35,11 @@ export default function RootLayout({ children }) {
         </div>
         <div />
         {/* <MainLayout> */}
-        <SocketProvider>
-          {children}
-        </SocketProvider>
+        <AuthProvider>
+          <SocketProvider>
+            {children}
+          </SocketProvider>
+        </AuthProvider>
         {/* </MainLayout> */}
       </body>
     </html>

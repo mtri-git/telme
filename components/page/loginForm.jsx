@@ -6,21 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import authService from "@/services/authService";
 import toast from "react-hot-toast";
-import useAuthStore from "@/store/authStore";
-import { Router } from "next/router";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { user, isAuthenticated } = useAuthStore();
-
-  useEffect(() => {
-    if (user) {
-      console.log("🚀 ~ useEffect ~ user:", user)
-      Router.push("/");
-    }
-  }, [user]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

@@ -83,6 +83,11 @@ const Sidebar = () => {
                     <span className="text-gray-400">
                       {room.last_message?.sender?.fullname}:{" "}
                     </span>
+                    {
+                      room?.last_message?.attachment && <span className="text-gray-500">[{
+                        room?.last_message?.attachment?.fileType
+                      }]</span>
+                    }
                     <span className="text-gray-500">{showContent(room?.last_message?.content)}</span>
                     <div className="text-xs text-gray-400">
                       {timeDiff(room?.last_message?.created_at)}
