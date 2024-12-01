@@ -33,11 +33,11 @@ export default function RootLayout({ children }) {
           <ThemeToggle />
         </div>
         <div />
-        <MainLayout>
+        {/* <MainLayout> */}
         <SocketProvider>
           {children}
         </SocketProvider>
-        </MainLayout>
+        {/* </MainLayout> */}
       </body>
     </html>
   );

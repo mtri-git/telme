@@ -10,8 +10,10 @@ import useMessage from "@/hooks/useMessage";
 import ChatItem from "./chatItem";
 import { v4 as uuidv4 } from "uuid";
 import { Ellipsis } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const ChatWindow = () => {
+  const router = useRouter();
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const { currentRoomId, currentRoomData, toggleOption } = useChatStore();
@@ -33,8 +35,10 @@ const ChatWindow = () => {
   // listen event
   useEffect(() => {
     const handleReceiveMessage = (data) => {
-      const { userId, message, sender } = data;
+      const { userId, roomId, message, sender } = data;
       console.log("🚀 ~ handleReceiveMessage ~ sender:", sender);
+
+      if (roomId !== currentRoomId) return;
 
       const currentUserId = userAuthData?.user?._id;
       if (userId === currentUserId) return;
@@ -49,8 +53,9 @@ const ChatWindow = () => {
     };
 
     const handleUserTyping = (data) => {
-      const { userId, sender } = data;
+      const { userId, sender, roomId } = data;
       const currentUserId = userAuthData?.user?._id;
+      if (roomId !== currentRoomId) return;
       if (userId === currentUserId) return;
       setTypingUsers((prev) => [...new Set([...prev, sender])]); // Thêm userId vào danh sách typing
     };
@@ -69,7 +74,7 @@ const ChatWindow = () => {
       socket.off("user_room_typing", handleUserTyping);
       socket.off("user_stop_room_typing", handleUserStopTyping);
     };
-  }, [addNewMessage, userAuthData?.user?._id]);
+  }, [addNewMessage, currentRoomId, userAuthData?.user?._id]);
 
   // listen when scroll to top
   useEffect(() => {

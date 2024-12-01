@@ -16,6 +16,7 @@ import { Textarea } from "../ui/textarea";
 import axiosInstance from "@/utils/axios";
 import toast from "react-hot-toast";
 import useChatStore from "@/store/chatStore";
+import { ToolTip } from "../base/toolTip";
 
 export function CreateRoomDialog() {
   const [name, setName] = useState("");
@@ -25,26 +26,32 @@ export function CreateRoomDialog() {
 
   const onCreateRoom = () => {
     console.log("Creating room", name, users);
-    axiosInstance.post("/rooms", {
-      name,
-      userEmails: users.split(",").map((email) => email.trim()),
-    }).then((response) => {
-      console.log("🚀 ~ onCreateRoom ~ response", response);
-      fetchRooms();
-      toast.success("Room created successfully");
-    }).catch((err) => {
-      console.log("🚀 ~ onCreateRoom")
-    }).finally(() => {
-      setName("");
-      setUsers("");
-    });
-  }
+    axiosInstance
+      .post("/rooms", {
+        name,
+        userEmails: users.split(",").map((email) => email.trim()),
+      })
+      .then((response) => {
+        console.log("🚀 ~ onCreateRoom ~ response", response);
+        fetchRooms();
+        toast.success("Room created successfully");
+      })
+      .catch((err) => {
+        console.log("🚀 ~ onCreateRoom");
+      })
+      .finally(() => {
+        setName("");
+        setUsers("");
+      });
+  };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="primary" className="float-right">
-          <Plus />
+          <ToolTip content="Create room">
+            <Plus />
+          </ToolTip>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -81,7 +88,9 @@ export function CreateRoomDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={onCreateRoom}>Save</Button>
+          <Button type="submit" onClick={onCreateRoom}>
+            Save
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

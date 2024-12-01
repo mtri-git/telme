@@ -22,7 +22,7 @@ const ChatOption = () => {
         {error && <p>{error}</p>}
         {currentRoomData?.users?.map((user) => (
           <li key={user._id}>
-            <Card>
+            <Card className="bg-white dark:bg-gray-800">
               <Button variant="ghost" className="w-full justify-start">
                 {user.fullname}
               </Button>

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import authService from "@/services/authService";
 import toast from "react-hot-toast";
 import useAuthStore from "@/store/authStore";
+import { Router } from "next/router";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -15,9 +16,9 @@ const LoginForm = () => {
   const { user, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    console.log("User is already logged in", user);
     if (user) {
-      window.location.href = "/";
+      console.log("🚀 ~ useEffect ~ user:", user)
+      Router.push("/");
     }
   }, [user]);
 
