@@ -21,7 +21,7 @@ const VideoConference = () => {
                     userVideo.current.srcObject = stream;
                 }
 
-                socketRef.current.emit('join_video_room', 'test-room');
+                socketRef.current.emit('join_video_room', 'test-room');``
 
                 // Khi có người tham gia
                 socketRef.current.on('user_join_video_call', ({ userId }) => {

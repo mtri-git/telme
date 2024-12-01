@@ -1,5 +1,5 @@
 import React from "react";
-import ChatItem from "@/components/base/chatItem";
+import MessageItem from "@/components/base/messageItem";
 
 function TestPage() {
   const chatMessages = [
@@ -12,7 +12,7 @@ function TestPage() {
   return (
     <div className="p-4">
       {chatMessages.map((chat, index) => (
-        <ChatItem
+        <MessageItem
           key={index}
           content={chat.content}
           sender={chat.sender}

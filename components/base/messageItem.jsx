@@ -1,8 +1,9 @@
 import React from "react";
 import { generateColorFromName, timeDiff } from "@/utils/function";
 import Image from "next/image";
+import MessageAttachment from "./messageAttachment";
 
-function ChatItem({ content, sender, isSender, avatarUrl, createdAt }) {
+function MessageItem({ content, sender, isSender, avatarUrl, createdAt, attachment }) {
   const bgColor = generateColorFromName(sender || "AB");
   const avatarText = sender?.charAt(0).toUpperCase();
   const timeAgo = timeDiff(createdAt);
@@ -38,6 +39,9 @@ function ChatItem({ content, sender, isSender, avatarUrl, createdAt }) {
           <div>
           {content}
           </div>
+          {attachment && (
+          <MessageAttachment attachment={attachment} isSender={isSender} />)}
+
         <div className={`text-xs ${isSender ? 'text-gray-300' : 'text-gray-500'} mt-1 ${isSender ? 'text-right' : 'text-left'}`}>
           {timeAgo}
         </div>
@@ -49,5 +53,5 @@ function ChatItem({ content, sender, isSender, avatarUrl, createdAt }) {
   );
 }
 
-export default ChatItem;
+export default MessageItem;
 
