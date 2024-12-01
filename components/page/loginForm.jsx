@@ -45,6 +45,7 @@ const LoginForm = () => {
           <Input
             id="email"
             type="email"
+            defaultValue="vmtri20@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
@@ -56,6 +57,7 @@ const LoginForm = () => {
           <Input
             id="password"
             type="password"
+            defaultValue="12345678"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
