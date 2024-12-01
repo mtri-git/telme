@@ -38,7 +38,8 @@ const ChatWindow = () => {
     const handleReceiveMessage = (data) => {
       
       const { userId, roomId, message, sender, attachment } = data;
-
+      fetchRooms();
+      
       if (roomId !== currentRoomId) return;
 
       const currentUserId = userAuthData?.user?._id;
@@ -54,7 +55,6 @@ const ChatWindow = () => {
       }
       addNewMessage(messageData);
 
-      fetchRooms();
     };
 
     const handleUserTyping = (data) => {
@@ -79,7 +79,7 @@ const ChatWindow = () => {
       socket.off("user_room_typing", handleUserTyping);
       socket.off("user_stop_room_typing", handleUserStopTyping);
     };
-  }, [addNewMessage, currentRoomId, userAuthData?.user?._id]);
+  }, [addNewMessage, currentRoomId, fetchRooms, userAuthData?.user?._id]);
 
   // listen when scroll to top
   useEffect(() => {

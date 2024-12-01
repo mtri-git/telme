@@ -2,15 +2,16 @@ import { LOCAL_STORAGE_KEY } from "@/constants/localStorage";
 import axios from "axios";
 import axiosInstance from "@/utils/axios";
 
+const localAxios = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  timeout: 10000,
+  withCredentials: true,
+});
+
 const login = async (email, password) => {
   try {
-    const axiosInstance = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
-      timeout: 10000,
-      withCredentials: true,
-    });
 
-    const response = await axiosInstance.post("/auth/login", {
+    const response = await localAxios.post("/auth/login", {
       email,
       password,
     });
@@ -26,7 +27,7 @@ const login = async (email, password) => {
     );
     localStorage.setItem(LOCAL_STORAGE_KEY.userInfo, JSON.stringify(data.user));
 
-    axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
+    localAxios.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
 
     return data;
   } catch (err) {
@@ -54,10 +55,20 @@ const getMe = async () => {
   }
 };
 
+const register = async (data) => {
+  try {
+    const response = await localAxios.post("/users/register", data);
+    return response.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
 const authService = {
   login,
   logout,
   getMe,
+  register
 };
 
 export default authService;

@@ -22,12 +22,12 @@ const LoginForm = () => {
         loading: "Logging in...",
         success: "Logged in successfully",
         error: (err) => {
-          console.log("🚀 ~ toast.promise ~ err:", err)
+          console.log("🚀 ~ toast.promise ~ err:", err);
           setError(err?.response?.data?.message);
           return "An error occurred";
-        }
+        },
       });
-      
+
       // sleep for 1 second
       await new Promise((resolve) => setTimeout(resolve, 500));
       // go to home
@@ -65,6 +65,14 @@ const LoginForm = () => {
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <Button type="submit" className="w-full">
           Login
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full"
+          onClick={() => (window.location.href = "/register")}
+        >
+          Register
         </Button>
       </form>
     </>

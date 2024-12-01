@@ -11,7 +11,7 @@ import useAuthStore from "@/store/authStore";
 import { CreateRoomDialog } from "../dialog/createRoomDialog";
 import { useRouter } from "next/navigation";
 import { ToolTip } from "./toolTip";
-import { showContent, timeDiff } from "@/utils/function";
+import { getHelloString, showContent, timeDiff } from "@/utils/function";
 import { JoinMeetingDialog } from "../dialog/joinMeetingDialog";
 
 const Sidebar = () => {
@@ -24,7 +24,7 @@ const Sidebar = () => {
     setCurrentRoomId,
     setCurrentRoomData,
   } = useChatStore();
-  const { logout } = useAuthStore();
+  const { logout, user } = useAuthStore();
 
   useEffect(() => {
     fetchRooms();
@@ -124,6 +124,10 @@ const Sidebar = () => {
       </ul>
       {/* Logout bytton */}
       <div className="mt-auto">
+        <h2 className="mb-4">
+          <span>{getHelloString()} </span>
+          <span className="text-sm text-gray-500">{user?.user?.fullname}</span>
+        </h2>
         <Button
           variant="destructive"
           className="w-full"

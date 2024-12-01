@@ -55,11 +55,11 @@ export const AuthProvider = ({ children }) => {
             payload: { user: response.data },
           });
         } else {
-          router.push("/login");
+          // router.push("/login");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
-        router.push("/login");
+        // router.push("/login");
       }
     };
 
