@@ -19,7 +19,7 @@ Open [http://localhost:3005](http://localhost:3005) with your browser to see the
 
 This project build with NextJs, Shadcn/ui, Tailwind.
 
-Server repo for this project: [Telme Server]([http://localhost:3005](http://localhost:3005))
+Server repo for this project: [Telme Server](https://github.com/mtri-git/telme_api)
 
 ## Learn More
 
