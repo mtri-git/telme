@@ -11,6 +11,8 @@ import {
   VideoOffIcon,
 } from "lucide-react";
 import socket from "@/utils/socketClient";
+import { LOCAL_STORAGE_KEY } from "@/constants/localStorage";
+import { useRouter } from "next/navigation";
 
 const VideoConference = ({ roomId }) => {
   const [peers, setPeers] = useState([]);
@@ -20,9 +22,23 @@ const VideoConference = ({ roomId }) => {
   const socketRef = useRef();
   const peerConnections = useRef({});
   const localStream = useRef();
+  const router = useRouter();
 
   useEffect(() => {
-    socketRef.current = io("http://localhost:3002");
+    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL);
+
+    const userData = JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE_KEY.userInfo)
+    );
+    const handleRegister = () => {
+      socket.emit("register", {
+        userId: userData?._id,
+      });
+    };
+    console.log("🚀 ~ useEffect ~ userData:", userData);
+
+    socket.connect();
+    socket.on("connect", handleRegister);
 
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
@@ -32,11 +48,16 @@ const VideoConference = ({ roomId }) => {
           userVideo.current.srcObject = stream;
         }
 
-        socketRef.current.emit("join_video_room", roomId);
+        socketRef.current.emit("join_video_room", {
+          roomId,
+          userId: userData?._id,
+          userInfo: userData,
+        });
 
-        socketRef.current.on("user_join_video_call", ({ userId }) => {
+        socketRef.current.on("user_join_video_call", ({ userId, userInfo }) => {
           if (peerConnections.current[userId]) return;
-          const peerConnection = createPeerConnection(userId, stream);
+          console.log(`User joined: ${userId}`);
+          const peerConnection = createPeerConnection(userId, stream, userInfo);
           peerConnections.current[userId] = peerConnection;
 
           peerConnection
@@ -109,12 +130,13 @@ const VideoConference = ({ roomId }) => {
     return () => {
       Object.values(peerConnections.current).forEach((pc) => pc.close());
       if (socketRef.current) {
+        socket.off("connect", handleRegister);
         socketRef.current.disconnect();
       }
     };
   }, [roomId]);
 
-  const createPeerConnection = (userId, stream) => {
+  const createPeerConnection = (userId, stream, userInfo) => {
     const peerConnection = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
@@ -134,30 +156,66 @@ const VideoConference = ({ roomId }) => {
     peerConnection.ontrack = (event) => {
       setPeers((prevPeers) => {
         if (prevPeers.some((peer) => peer.userId === userId)) return prevPeers;
-        return [...prevPeers, { userId, stream: event.streams[0] }];
+        return [
+          ...prevPeers,
+          { userId, stream: event.streams[0], userInfo: userInfo },
+        ];
       });
     };
 
-    stream
-      .getTracks()
-      .forEach((track) => peerConnection.addTrack(track, stream));
+    // Replace old tracks with new tracks from the local stream
+    stream.getTracks().forEach((track) => {
+      const sender = peerConnection
+        .getSenders()
+        .find((s) => s.track && s.track.kind === track.kind);
+
+      if (sender) {
+        sender.replaceTrack(track);
+      } else {
+        peerConnection.addTrack(track, stream);
+      }
+    });
 
     return peerConnection;
   };
 
   const toggleVideo = () => {
-    const videoTrack = localStream.current.getVideoTracks()[0];
-    if (videoTrack) {
-      videoTrack.enabled = !videoEnabled;
-      setVideoEnabled(!videoEnabled);
+    if (localStream.current) {
+      const videoTrack = localStream.current.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoEnabled;
+        setVideoEnabled(!videoEnabled);
+
+        // Update video track for all peer connections
+        Object.values(peerConnections.current).forEach((peerConnection) => {
+          const sender = peerConnection
+            .getSenders()
+            .find((s) => s.track && s.track.kind === "video");
+          if (sender) {
+            sender.replaceTrack(videoTrack);
+          }
+        });
+      }
     }
   };
 
   const toggleAudio = () => {
-    const audioTrack = localStream.current.getAudioTracks()[0];
-    if (audioTrack) {
-      audioTrack.enabled = !audioEnabled;
-      setAudioEnabled(!audioEnabled);
+    if (localStream.current) {
+      const audioTrack = localStream.current.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioEnabled;
+        setAudioEnabled(!audioEnabled);
+
+        // Update audio track for all peer connections
+        Object.values(peerConnections.current).forEach((peerConnection) => {
+          const sender = peerConnection
+            .getSenders()
+            .find((s) => s.track && s.track.kind === "audio");
+          if (sender) {
+            sender.replaceTrack(audioTrack);
+          }
+        });
+      }
     }
   };
 
@@ -166,6 +224,7 @@ const VideoConference = ({ roomId }) => {
     if (socketRef.current) {
       socketRef.current.emit("leave_video_call", roomId);
       socketRef.current.disconnect();
+      router.push("/we-meet/left-meeting");
     }
   };
 
@@ -179,19 +238,32 @@ const VideoConference = ({ roomId }) => {
           className="w-48 h-48 border-4 border-red-500 rounded-lg shadow-lg"
         />
         {peers.map((peer) => (
-          <video
-            key={peer.userId}
-            ref={(ref) => {
-              if (ref && !ref.srcObject) {
-                ref.srcObject = peer.stream;
-              }
-            }}
-            autoPlay
-            className="w-48 h-48 rounded-lg shadow-lg"
-          />
+          <div key={peer.userId}>
+            <video
+              ref={(ref) => {
+                if (ref && !ref.srcObject) {
+                  ref.srcObject = peer.stream;
+                }
+              }}
+              autoPlay
+              className="w-48 h-48 rounded-lg shadow-lg"
+            />
+            <div>{peer?.userInfo?.fullname}</div>
+          </div>
         ))}
       </div>
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 max-w-sm w-full bg-white p-4 rounded-lg shadow-lg">
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 max-w-sm w-full bg-white dark:bg-gray-600 p-4 rounded-lg shadow-lg">
+        <div className="text-center mb-4 flex justify-center gap-4">
+          <h1 className="text-xl font-bold">Code:</h1>
+          <span className="text-xl font-bold">{roomId}</span>
+          <Button
+            variant="primary"
+            className="text-white bg-blue-500 hover:bg-blue-600"
+            onClick={() => navigator.clipboard.writeText(roomId)}
+          >
+            Copy
+          </Button>
+        </div>
         <div className="flex justify-center space-x-4">
           <Button
             onClick={toggleVideo}
