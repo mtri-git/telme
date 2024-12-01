@@ -8,8 +8,8 @@ import authService from "@/services/authService";
 import toast from "react-hot-toast";
 
 const LoginForm = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("vmtri20@gmail.com");
+  const [password, setPassword] = useState("12345678");
   const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
@@ -45,7 +45,6 @@ const LoginForm = () => {
           <Input
             id="email"
             type="email"
-            defaultValue="vmtri20@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
@@ -57,7 +56,6 @@ const LoginForm = () => {
           <Input
             id="password"
             type="password"
-            defaultValue="12345678"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
