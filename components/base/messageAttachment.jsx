@@ -1,15 +1,13 @@
 import React from "react";
 
 export default function MessageAttachment({attachment, isSender}) {
-  console.log("🚀 ~ MessageItem ~ attachment:", attachment?.fileType)
 
-  if (!attachment) return null;
+  if (!attachment || !attachment?.fileUrl) return null;
+
   if (
     attachment?.fileType?.includes("image") ||
     attachment?.fileType === "image"
   ) {
-    console.log("🚀 ~ MessageAttachment ~ attachment:", attachment);
-
     return (
       <div className="mt-2">
         <img

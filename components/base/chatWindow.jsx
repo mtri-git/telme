@@ -17,12 +17,10 @@ const ChatWindow = () => {
   const router = useRouter();
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const { currentRoomId, currentRoomData, toggleOption, fetchRooms } =
-    useChatStore();
+  const { currentRoomId, currentRoomData, toggleOption, fetchRooms } = useChatStore();
   const typingTimeoutRef = useRef(null);
   const [typingUsers, setTypingUsers] = useState([]);
-  const { messages, addNewMessage, loadMoreMessage } =
-    useMessage(currentRoomId);
+  const { messages, addNewMessage, loadMoreMessage } = useMessage(currentRoomId);
   const messageListRef = useRef(null);
   const userAuthData = useAuthStore((state) => state.user);
 
@@ -38,23 +36,25 @@ const ChatWindow = () => {
   // listen event
   useEffect(() => {
     const handleReceiveMessage = (data) => {
-      fetchRooms();
+      
       const { userId, roomId, message, sender, attachment } = data;
-      console.log("🚀 ~ handleReceiveMessage ~ sender:", sender);
 
       if (roomId !== currentRoomId) return;
 
       const currentUserId = userAuthData?.user?._id;
       if (userId === currentUserId) return;
 
-      addNewMessage({
+      const messageData = {
         _id: Date.now(),
         content: message,
         is_sender: false,
         created_at: new Date(),
         attachment,
         sender,
-      });
+      }
+      addNewMessage(messageData);
+
+      fetchRooms();
     };
 
     const handleUserTyping = (data) => {
@@ -146,6 +146,7 @@ const ChatWindow = () => {
     console.log("🚀 ~ sendMessage ~ messageData", messageData);
 
     addNewMessage(messageData);
+    fetchRooms();
     setInput("");
     setFile(null);
     setIsTyping(false);

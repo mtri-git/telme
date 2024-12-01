@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import useChatStore from "@/store/chatStore";
 import socket from "@/utils/socketClient";
-import { LogOut, Binoculars } from "lucide-react";
+import { LogOut, Binoculars, Badge } from "lucide-react";
 import { Card } from "../ui/card";
 import authService from "@/services/authService";
 import useAuthStore from "@/store/authStore";
 import { CreateRoomDialog } from "../dialog/createRoomDialog";
 import { useRouter } from "next/navigation";
 import { ToolTip } from "./toolTip";
+import { showContent, timeDiff } from "@/utils/function";
 
 const Sidebar = () => {
   const router = useRouter();
@@ -63,19 +64,34 @@ const Sidebar = () => {
             <Binoculars size={24} />
           </Button>
         </ToolTip>
-        
+
         <CreateRoomDialog />
       </h2>
       <ul className="space-y-2">
-        {loading && <p>Loading...</p>}
+        {/* {loading && <p>Loading...</p>} */}
         {error && <p>Error: {error}</p>}
         {rooms &&
           rooms?.map((room) => (
-            <li key={room._id} onClick={() => onClickRoomItem(room._id)}>
+            <li key={room._id}>
               <Card className="bg-white dark:bg-gray-800">
-                <Button variant="ghost" className="w-full justify-start">
+                <Button variant="ghost" className="w-full justify-start" onClick={() => onClickRoomItem(room._id)}>
                   {room.name}
                 </Button>
+                {/* Last message */}
+                {room.last_message && (
+                  <div className="text-sm pl-4 pr-4">
+                    <span className="text-gray-400">
+                      {room.last_message?.sender?.fullname}:{" "}
+                    </span>
+                    <span className="text-gray-500">{showContent(room?.last_message?.content)}</span>
+                    <div className="text-xs text-gray-400">
+                      {timeDiff(room?.last_message?.created_at)}
+                    </div>
+                  </div>
+                )}
+                {
+                  room.is_new && <Badge variant="primary" className="absolute top-2 right-2" />
+                }
               </Card>
             </li>
           ))}

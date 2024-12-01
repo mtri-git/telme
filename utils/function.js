@@ -8,6 +8,8 @@ function generateColorFromName(name) {
   }
 
 function timeDiff(time) {
+    if(!time) return "";
+    
     const now = new Date();
     const diff = now - new Date(time);
     const seconds = Math.floor(diff / 1000);
@@ -29,4 +31,13 @@ function timeDiff(time) {
     }
 }
 
-export { generateColorFromName, timeDiff };
+function showContent(content) {
+    if(!content) return "";
+
+    if (content.length > 40) {
+        return content.slice(0, 40) + "...";
+    }
+    return content;
+}
+
+export { generateColorFromName, timeDiff, showContent };
