@@ -12,7 +12,7 @@ export default function MainLayout({ children }) {
     authService.getMe().then((data) => {
       console.log("🚀 ~ authService.getMe ~ data:", data);
       if (!data) {
-        router.push("/login");
+        // router.push("/login");
       }
       const userData = data.data
       setUser({ user: userData, isAuthenticated: true });
