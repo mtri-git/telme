@@ -59,7 +59,7 @@ axiosInstance.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem(LOCAL_STORAGE_KEY.refreshToken);
         if(!refreshToken) {
-          return;
+          throw new Error("Refresh token not found");
         }
 
         const { data } = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + REFRESH_TOKEN_URL, { refreshToken });
@@ -79,9 +79,11 @@ axiosInstance.interceptors.response.use(
 
         localStorage.removeItem(LOCAL_STORAGE_KEY.accessToken);
         localStorage.removeItem(LOCAL_STORAGE_KEY.refreshToken);
+        localStorage.removeItem(LOCAL_STORAGE_KEY.userInfo);
 
-        if (typeof window !== "undefined" && err.status !== 200) {
-          window.location.href = "/login";
+        if (typeof window !== "undefined") {
+          // window.location.href = "/login";
+          console.log("Redirect to login page");
         }
 
         return Promise.reject(err);

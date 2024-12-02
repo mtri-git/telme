@@ -13,7 +13,6 @@ const HomePage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Lấy thông tin người dùng
     authService.getMe().then((data) => {
       console.log("🚀 ~ authService.getMe ~ data:", data);
       if (!data) {
@@ -23,24 +22,22 @@ const HomePage = () => {
       const userData = data.data;
       setUser({ user: userData, isAuthenticated: true });
 
-      // Kết nối socket
       socket.connect();
 
-      // Đăng ký khi kết nối thành công
       const handleRegister = () => {
         socket.emit("register", {
           userId: userData?._id,
         });
       };
 
-      // Đăng ký ngay khi kết nối thành công
       socket.on("connect", handleRegister);
 
-      // Đảm bảo xoá listener khi component unmount
       return () => {
         socket.off("connect", handleRegister);
         socket.disconnect();
       };
+    }).catch(() => {
+      router.push("/login");
     });
   }, [setUser, router]);
 

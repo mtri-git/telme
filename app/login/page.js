@@ -5,18 +5,18 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const LoginPage = () => {
-  const { isAuthenticated } = useAuth();
+  // const { isAuthenticated } = useAuth();
   const router = useRouter()
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/')
-    }
-  }, [isAuthenticated, router])
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     router.push('/')
+  //   }
+  // }, [isAuthenticated, router])
 
-  if (isAuthenticated) {
-    return null;
-  }
+  // if (isAuthenticated) {
+  //   return null;
+  // }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-700">
