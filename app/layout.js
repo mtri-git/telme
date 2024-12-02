@@ -3,7 +3,7 @@ import { SocketProvider } from "@/context/socketContext";
 import "./globals.css";
 import ThemeToggle from "@/components/base/themeToggle";
 import { Toaster } from "react-hot-toast";
-import MainLayout from "@/components/layout/MainLayout";
+import AuthLayout from "@/components/layout/AuthLayout";
 import { AuthProvider } from "@/context/authContext";
 
 // const geistSans = localFont({
@@ -34,13 +34,11 @@ export default function RootLayout({ children }) {
           <ThemeToggle />
         </div>
         <div />
-        {/* <MainLayout> */}
         <AuthProvider>
-          <SocketProvider>
-            {children}
-          </SocketProvider>
+          <AuthLayout>
+            <SocketProvider>{children}</SocketProvider>
+          </AuthLayout>
         </AuthProvider>
-        {/* </MainLayout> */}
       </body>
     </html>
   );

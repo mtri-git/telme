@@ -4,16 +4,13 @@ import React, { createContext, useContext, useReducer, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import authService from "../services/authService";
 
-// Khởi tạo AuthContext
 const AuthContext = createContext();
 
-// Hành động reducer
 const ACTIONS = {
   SET_USER: "SET_USER",
   LOGOUT: "LOGOUT",
 };
 
-// Reducer quản lý trạng thái
 const authReducer = (state, action) => {
   switch (action.type) {
     case ACTIONS.SET_USER:
@@ -33,18 +30,15 @@ const authReducer = (state, action) => {
   }
 };
 
-// Trạng thái mặc định
 const initialState = {
   user: null,
   isAuthenticated: false,
 };
 
-// AuthProvider component
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const router = useRouter();
 
-  // Kiểm tra trạng thái đăng nhập khi ứng dụng load
   useEffect(() => {
     const fetchUser = async () => {
       try {

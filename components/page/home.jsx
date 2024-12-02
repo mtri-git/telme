@@ -14,9 +14,7 @@ const HomePage = () => {
 
   useEffect(() => {
     authService.getMe().then((data) => {
-      console.log("🚀 ~ authService.getMe ~ data:", data);
       if (!data) {
-        router.push("/login");
         return;
       }
       const userData = data.data;
@@ -37,7 +35,7 @@ const HomePage = () => {
         socket.disconnect();
       };
     }).catch(() => {
-      router.push("/login");
+      console.log("error");
     });
   }, [setUser, router]);
 

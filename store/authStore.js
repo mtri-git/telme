@@ -1,3 +1,4 @@
+import authService from "@/services/authService";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
@@ -7,7 +8,7 @@ const useAuthStore = create(
         (set) => ({
           user: null,
           isAuthenticated: false,
-          isLoading: false,
+          isLoading: true,
 
           setIsLoading: (isLoading) => set({ isLoading }),
           
@@ -16,6 +17,21 @@ const useAuthStore = create(
               console.log("auth/setUser", user);
               return set({ user, isAuthenticated: !!user }, false, "auth/setUser");
             },
+
+          init: async () => {
+            set({ isLoading: true });
+
+            try {
+              const response = await authService.getMe();
+              const user = response.data;
+              console.log("🚀 ~ init: ~ user:", user)
+              set({ user, isAuthenticated: !!user });
+            } catch (error) {
+              console.error("auth/init", error);
+            } finally {
+              set({ isLoading: false });
+            }
+          },
 
           logout: () =>
             set({ user: null, isAuthenticated: false }, false, "auth/logout"),
@@ -29,6 +45,20 @@ const useAuthStore = create(
         setUser: (user) => set({ user, isAuthenticated: !!user }),
 
         logout: () => set({ user: null, isAuthenticated: false }),
+
+        init: async () => {
+          set({ isLoading: true });
+
+          try {
+            const response = await authService.getMe();
+            const user = response.data;
+            set({ user, isAuthenticated: !!user });
+          } catch (error) {
+            console.error("auth/init", error);
+          } finally {
+            set({ isLoading: false });
+          }
+        },
       })
 );
 
