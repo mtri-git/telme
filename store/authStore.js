@@ -51,7 +51,7 @@ const useAuthStore = create(
 
           try {
             const response = await authService.getMe();
-            const user = response.data;
+            const user = response?.data;
             set({ user, isAuthenticated: !!user });
           } catch (error) {
             set({ user: null, isAuthenticated: false });
