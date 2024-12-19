@@ -27,7 +27,8 @@ const useAuthStore = create(
               console.log("🚀 ~ init: ~ user:", user)
               set({ user, isAuthenticated: !!user });
             } catch (error) {
-              console.error("auth/init", error);
+              set({ user: null, isAuthenticated: false });
+              console.log("auth/init", error);
             } finally {
               set({ isLoading: false });
             }
@@ -55,7 +56,7 @@ const useAuthStore = create(
             set({ user, isAuthenticated: !!user });
           } catch (error) {
             set({ user: null, isAuthenticated: false });
-            console.error("auth/init", error);
+            console.log("auth/init", error);
           } finally {
             set({ isLoading: false });
           }

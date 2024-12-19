@@ -50,7 +50,7 @@ const getMe = async () => {
   try {
     const accessToken = localStorage.getItem(LOCAL_STORAGE_KEY.accessToken);
     if(!accessToken) {
-      return {data: null};
+      return { data: null}
     }
 
     const response = await axiosInstance.get("/users/me");

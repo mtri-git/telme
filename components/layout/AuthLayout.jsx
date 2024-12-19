@@ -9,8 +9,7 @@ export default function AuthLayout({ children }) {
 
   useEffect(() => {
     init();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [init]);
 
   if (isLoading) {
     return <Loading />;
@@ -18,7 +17,7 @@ export default function AuthLayout({ children }) {
 
   if (!isAuthenticated && typeof window !== 'undefined') {
     // check curent route is not login page or register page
-    if (window.location.pathname !== '/login' || window.location.pathname !== '/register') {
+    if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
       redirect('/login')
     }
   }

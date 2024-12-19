@@ -1,14 +1,15 @@
 'use client';
 import LoginForm from "@/components/page/loginForm";
-import { useAuth } from "@/context/authContext";
+import useAuthStore from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const LoginPage = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter()
 
   useEffect(() => {
+    console.log("LoginPage -> isAuthenticated", isAuthenticated)
     if (isAuthenticated) {
       router.push('/')
     }
