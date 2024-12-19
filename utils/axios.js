@@ -5,7 +5,7 @@ const REFRESH_TOKEN_URL = "/auth/renew-token";
 
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL, // Thay bằng base URL của bạn
-  timeout: 10000,
+  // timeout: 10000,
   withCredentials: true,
 });
 

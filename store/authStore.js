@@ -54,6 +54,7 @@ const useAuthStore = create(
             const user = response.data;
             set({ user, isAuthenticated: !!user });
           } catch (error) {
+            set({ user: null, isAuthenticated: false });
             console.error("auth/init", error);
           } finally {
             set({ isLoading: false });
