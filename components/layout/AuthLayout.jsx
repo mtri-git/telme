@@ -17,7 +17,7 @@ export default function AuthLayout({ children }) {
 
   if (!isAuthenticated && typeof window !== 'undefined') {
     // check curent route is not login page or register page
-    if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+    if (window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/we-meet') {
       redirect('/login')
     }
   }
