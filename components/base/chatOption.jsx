@@ -10,7 +10,7 @@ const ChatOption = () => {
   if (!isOpenOption) return null;
 
   return (
-    <aside className="flex flex-col w-64 bg-gray-100 border-r h-full p-4 dark:bg-gray-950">
+    <aside className="flex flex-col w-64 bg-background border-r h-full p-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-bold">
           <span>Room Info</span>
@@ -21,9 +21,8 @@ const ChatOption = () => {
         <div>User list</div>
         {error && <p>{error}</p>}
         {currentRoomData?.users?.map((user) => (
-          <li key={user._id}>
-            <Card className="bg-white dark:bg-gray-800">
-              <Button variant="ghost" className="w-full justify-start">
+          <li key={user._id}>            <Card className="bg-card">
+              <Button variant="ghost" className="w-full justify-start text-card-foreground">
                 {user.fullname}
               </Button>
             </Card>

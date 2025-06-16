@@ -202,24 +202,29 @@ const ChatWindow = () => {
   const handleButtonClick = () => {
     fileInputRef.current?.click();
   };
-
   return (
-    <div className="flex flex-col flex-1 h-full bg-white dark:bg-gray-950">
+    <div className="flex flex-col flex-1 h-full bg-background border-l border-border">
       {/* Header */}
       {currentRoomData && (
-        <div className="flex gap-2 p-4 border-">
-          <h1 className="text-lg font-bold">
-            Chat with {currentRoomData?.name}
+        <div className="py-4 px-6 border-b border-border flex items-center justify-between bg-card/50">
+          <h1 className="text-lg font-semibold text-foreground">
+            {currentRoomData?.name}
           </h1>
-          <Button variant="primary" onClick={toggleOption}>
-            <Ellipsis />
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={toggleOption}>
+            <Ellipsis size={18} />
           </Button>
         </div>
       )}
 
       {!currentRoomId && (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-lg font-bold">Select a room to start chatting</p>
+        <div className="flex-1 flex flex-col items-center justify-center p-6">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Ellipsis size={24} className="text-primary" />
+          </div>
+          <p className="text-xl font-medium text-foreground mb-2">No conversation selected</p>
+          <p className="text-sm text-muted-foreground text-center max-w-md">
+            Choose a chat from the sidebar or create a new room to start messaging
+          </p>
         </div>
       )}
 
@@ -228,7 +233,7 @@ const ChatWindow = () => {
         <div
           id="message-list"
           ref={messageListRef}
-          className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900"
+          className="flex-1 overflow-y-auto p-5 space-y-4 bg-background/80 dark:bg-background/30"
         >
           {messages &&
             [...messages]
@@ -245,54 +250,73 @@ const ChatWindow = () => {
                 />
               ))}
           {typingUsers.length > 0 && (
-            <p className="text-sm italic text-gray-500">
-              {getSenderNames()} is typing...
-            </p>
+            <div className="flex items-center space-x-2 pl-4">
+              <div className="flex space-x-1">
+                <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {getSenderNames()} is typing...
+              </p>
+            </div>
           )}
         </div>
       )}
 
       {/* Input Box */}
       {currentRoomId && (
-        <div className="p-4 border-t flex items-center space-x-2 bg-white dark:bg-gray-700">
-          <div className="flex-1">
-            <Input
-              type="text"
-              placeholder="Type a message"
-              value={input}
-              onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-              onChange={handleTyping}
-            />
-            {/* Upload file */}
-            <div className="flex items-start">
-              <Input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                id="file-upload"
-              />
-              <Paperclip
-                className="w-5 h-5 mr-2 cursor-pointer"
-                onClick={handleButtonClick}
-              />
-              {file && (
-                <div className="flex text-sm text-gray-500 dark:text-gray-400">
-                  <span>{file?.name}</span>
-                  <button
-                    className="text-blue-500 dark:text-blue-400"
-                    onClick={() => setFile(null)}
-                  >
-                    <XIcon />
-                  </button>
-                </div>
-              )}
+        <div className="p-4 border-t border-border bg-card/50">
+          {file && (
+            <div className="mb-2 p-2 bg-accent/50 rounded-md flex items-center justify-between">
+              <div className="flex items-center">
+                <Paperclip className="w-4 h-4 mr-2 text-muted-foreground" />
+                <span className="text-sm text-foreground truncate max-w-[240px]">{file?.name}</span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 rounded-full hover:bg-destructive/10"
+                onClick={() => setFile(null)}
+              >
+                <XIcon className="h-4 w-4 text-muted-foreground" />
+              </Button>
             </div>
-            {/* end upload file */}
-          </div>
-          <Button onClick={sendMessage}>
-            <SendIcon />
-          </Button>
+          )}
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full hover:bg-accent"
+              onClick={handleButtonClick}
+            >
+              <Paperclip className="h-5 w-5 text-muted-foreground" />
+            </Button>
+            <Input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              id="file-upload"
+            />
+            <div className="flex-1 relative">
+              <Input
+                type="text"
+                placeholder="Type a message..."
+                value={input}
+                className="pr-10 bg-background border-input focus-visible:ring-1 focus-visible:ring-offset-1 py-5"
+                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                onChange={handleTyping}
+              />
+            </div>
+            <Button 
+              onClick={sendMessage}
+              size="icon"
+              className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90"
+              disabled={!input.trim() && !file}
+            >
+              <SendIcon className="h-4 w-4" />
+            </Button>          </div>
         </div>
       )}
     </div>

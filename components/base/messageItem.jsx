@@ -9,49 +9,59 @@ function MessageItem({ content, sender, isSender, avatarUrl, createdAt, attachme
   const timeAgo = timeDiff(createdAt);
 
   return (
-    <div className={`flex ${isSender ? "justify-end" : "justify-start"} mb-4`}>
+    <div className={`flex ${isSender ? "justify-end" : "justify-start"} mb-4 group hover:opacity-100`}>
       {/* Avatar displayed if it's "other" */}
       {!isSender && (
         <div
-          className="mr-3 flex items-center justify-center w-10 h-10 rounded-full bg-gray-300"
+          className="mr-2 flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full text-white shadow-sm"
           style={{ backgroundColor: bgColor }}
         >
           {avatarUrl ? (
             <Image
               src={avatarUrl}
               alt="Avatar"
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-8 h-8 rounded-full object-cover"
+              width={32}
+              height={32}
             />
           ) : (
-            <span className="text-sm font-bold text-gray-700">
+            <span className="text-xs font-semibold">
               {avatarText || "?"}
             </span>
           )}
         </div>
       )}
-        <div
-          className={`max-w-[75%] px-4 py-2 rounded-lg text-sm ${
-            isSender
-              ? "bg-blue-500 text-white rounded-br-none"
-              : "bg-gray-200 text-gray-900 rounded-bl-none"
-          }`}
-        >
-          <div>
-          {content}
+      <div        className={`max-w-[75%] px-4 py-2.5 text-sm shadow-sm ${
+          isSender
+            ? "bg-primary text-primary-foreground rounded-t-2xl rounded-bl-2xl rounded-br-sm"
+            : "bg-muted text-muted-foreground rounded-t-2xl rounded-br-2xl rounded-bl-sm border border-border"
+        }`}
+      >
+        {!isSender && (
+          <div className="text-xs font-medium text-muted-foreground mb-1">
+            {sender}
           </div>
-          {attachment && (
-          <MessageAttachment attachment={attachment} isSender={isSender} />)}
-
-        <div className={`text-xs ${isSender ? 'text-gray-300' : 'text-gray-500'} mt-1 ${isSender ? 'text-right' : 'text-left'}`}>
-          {timeAgo}
+        )}
+        <div className={`${attachment ? "mb-2" : ""} break-words`}>
+          {content}
         </div>
+        {attachment && (
+          <MessageAttachment attachment={attachment} isSender={isSender} />
+        )}
+        <div className={`text-xs mt-1 flex items-center ${isSender ? 'justify-end' : 'justify-start'}`}>
+          <span className={`${isSender ? 'text-blue-200' : 'text-gray-400'} opacity-80`}>
+            {timeAgo}
+          </span>
         </div>
+      </div>
+      
       {isSender && (
-        <div className="ml-3 flex items-center justify-center w-10 h-10"></div>
+        <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 w-8 h-8 flex items-center justify-center">
+          {/* Can add read receipts or message actions here */}
+        </div>
       )}
     </div>
   );
 }
 
 export default MessageItem;
-

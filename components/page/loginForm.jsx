@@ -17,7 +17,6 @@ const LoginForm = () => {
     setError("");
 
     try {
-      console.log("Logging in with", email, password);
       await toast.promise(authService.login(email, password), {
         loading: "Logging in...",
         success: "Logged in successfully",
@@ -36,44 +35,53 @@ const LoginForm = () => {
       setError("An unexpected error occurred");
     }
   };
-
   return (
     <>
-      <form onSubmit={handleLogin} className="max-w-md mx-auto space-y-4">
-        <div>
-          <Label htmlFor="email">Email</Label>
+      <form onSubmit={handleLogin} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <Input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
+            className="h-11 rounded-lg"
             required
           />
         </div>
-        <div>
-          <Label htmlFor="password">Password</Label>
-          <Input
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+            <a href="#" className="text-sm text-primary hover:underline">
+              Forgot password?
+            </a>
+          </div><Input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
+            className="h-11 rounded-lg"
             required
           />
         </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <Button type="submit" className="w-full">
-          Login
+        {error && <p className="text-destructive text-sm font-medium">{error}</p>}
+        <Button type="submit" className="w-full h-11 rounded-lg bg-primary text-primary-foreground hover:opacity-90">
+          Sign in
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className="w-full"
-          onClick={() => (window.location.href = "/register")}
-        >
-          Register
-        </Button>
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">Don't have an account?{" "}
+            <Button
+              type="button"
+              variant="link"
+              className="px-1 text-primary hover:underline"
+              onClick={() => (window.location.href = "/register")}
+            >
+              Sign up
+            </Button>
+          </p>
+        </div>
       </form>
     </>
   );

@@ -20,10 +20,9 @@ export default function VideoCallPage() {
       </div>
     )
   }
-
   return (
     <>
-        <VideoConference roomId={code}/>
+      <VideoConference roomId={code}/>
     </>
   )
 }

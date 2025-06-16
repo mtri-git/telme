@@ -22,7 +22,7 @@ const ThemeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 bg-gray-200 rounded-full dark:bg-gray-700 dark:text-white shadow-md"
+      className="p-2 bg-muted rounded-full text-foreground shadow-md hover:bg-muted/80 transition-colors"
       aria-label="Toggle Theme"
     >
       {theme === "light" ? "🌞" : "🌙"}

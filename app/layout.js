@@ -25,15 +25,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        className="min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white relative"
-      >
+      <body className="min-h-screen bg-background text-foreground relative">
         <Toaster />
         <div className="fixed top-2 right-4 z-50">
           <ThemeToggle />
         </div>
-        <div />
         <AuthProvider>
           <AuthLayout>
             <SocketProvider>{children}</SocketProvider>

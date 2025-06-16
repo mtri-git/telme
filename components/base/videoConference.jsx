@@ -221,15 +221,21 @@ const VideoConference = ({ roomId }) => {
 
   const endCall = () => {
     Object.values(peerConnections.current).forEach((pc) => pc.close());
+    // close all tracks
+    localStream.current.getTracks().forEach((track) => track.stop());
+
     if (socketRef.current) {
       socketRef.current.emit("leave_video_call", roomId);
       socketRef.current.disconnect();
-      router.push("/we-meet/left-meeting");
+
+      setTimeout(() => {
+        router.push("/we-meet/left-meeting");
+      }, 1000);
     }
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4 p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+    <div className="flex flex-col items-center space-y-4 p-6 bg-background min-h-screen">
       <div className="flex flex-wrap justify-center gap-4">
         <video
           ref={userVideo}
@@ -252,7 +258,7 @@ const VideoConference = ({ roomId }) => {
           </div>
         ))}
       </div>
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 max-w-sm w-full bg-white dark:bg-gray-600 p-4 rounded-lg shadow-lg">
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 max-w-sm w-full bg-card p-4 rounded-lg shadow-lg text-card-foreground">
         <div className="text-center mb-4 flex justify-center gap-4">
           <h1 className="text-xl font-bold">Code:</h1>
           <span className="text-xl font-bold">{roomId}</span>

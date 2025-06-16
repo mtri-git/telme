@@ -14,7 +14,6 @@ const useAuthStore = create(
           
           setUser: (user) =>
             {
-              console.log("auth/setUser", user);
               return set({ user, isAuthenticated: !!user }, false, "auth/setUser");
             },
 
