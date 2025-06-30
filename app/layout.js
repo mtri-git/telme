@@ -23,6 +23,7 @@ export const metadata = {
   description: "Chat app",
   manifest: "/manifest.json",
   themeColor: "#1f2937",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

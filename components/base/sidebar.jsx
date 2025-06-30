@@ -57,10 +57,10 @@ const Sidebar = () => {
     window.open("/we-meet?code="+randomCode, "_blank");
   }
   return (
-    <aside className="flex flex-col w-72 bg-card border-r border-border h-full dark:bg-card">
-      <div className="p-5 border-b border-border">
+    <aside className="flex flex-col w-full sm:w-72 bg-card border-r border-border h-full dark:bg-card min-w-0 max-w-none sm:max-w-none">
+      <div className="p-4 sm:p-5 border-b border-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-foreground">Chats</h2>
+          <h2 className="text-xl sm:text-xl font-bold text-foreground">Chats</h2>
           <div className="flex space-x-1">
             <ToolTip content="Explore room">
               <Button
@@ -79,22 +79,23 @@ const Sidebar = () => {
         <div className="space-y-2">
           <Button 
             variant="default" 
-            className="w-full bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800 transition-colors"
+            className="w-full bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800 transition-colors text-base sm:text-base"
             onClick={onClickStartAMeeting}
           >
-            Start a meeting
+            <span className="hidden sm:inline">Start a meeting</span>
+            <span className="sm:hidden">Start meeting</span>
           </Button>
           <JoinMeetingDialog />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-3 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
         <ul className="space-y-2">
           {error && <p className="text-destructive text-sm p-2">Error: {error}</p>}
           {rooms && rooms.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No chats yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Create a room to start chatting</p>
+            <div className="text-center py-8 sm:py-8">
+              <p className="text-muted-foreground text-base sm:text-base">No chats yet</p>
+              <p className="text-sm sm:text-sm text-muted-foreground mt-1">Create a room to start chatting</p>
             </div>
           )}
           {rooms &&
@@ -103,12 +104,12 @@ const Sidebar = () => {
                 <Card className="hover:bg-accent/50 transition-colors relative overflow-hidden border-border">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start p-3 h-auto"
+                    className="w-full justify-start p-3 sm:p-3 h-auto"
                     onClick={() => onClickRoomItem(room._id)}
                   >
                     <div className="flex flex-col items-start w-full">
                       <div className="flex items-center w-full">
-                        <span className="font-medium text-foreground truncate">{room.name}</span>
+                        <span className="font-medium text-foreground truncate text-base sm:text-base">{room.name}</span>
                         {room.is_new && (
                           <span className="h-2 w-2 rounded-full bg-blue-500 ml-1.5 flex-shrink-0"></span>
                         )}
@@ -127,7 +128,7 @@ const Sidebar = () => {
                             )}
                           </div>
                           <div className="flex items-center justify-between mt-0.5">
-                            <span className="text-xs text-muted-foreground truncate max-w-[180px]">
+                            <span className="text-xs text-muted-foreground truncate max-w-[200px] sm:max-w-[180px]">
                               {showContent(room?.last_message?.content)}
                             </span>
                             <span className="text-xs text-muted-foreground whitespace-nowrap ml-1">
@@ -144,17 +145,17 @@ const Sidebar = () => {
         </ul>
       </div>
 
-      <div className="border-t border-border p-4">
+      <div className="border-t border-border p-4 sm:p-4">
         <div className="flex flex-col space-y-3">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium text-foreground">{user?.user?.fullname}</div>
-              <div className="text-xs text-muted-foreground">{getHelloString()}</div>
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-foreground text-base sm:text-base truncate">{user?.user?.fullname}</div>
+              <div className="text-sm text-muted-foreground truncate">{getHelloString()}</div>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-full hover:bg-destructive/10"
+              className="h-8 w-8 rounded-full hover:bg-destructive/10 flex-shrink-0 ml-2"
               onClick={onClickLogout}
             >
               <LogOut size={18} className="text-destructive" />

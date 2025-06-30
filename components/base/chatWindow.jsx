@@ -9,7 +9,7 @@ import useAuthStore from "@/store/authStore";
 import useMessage from "@/hooks/useMessage";
 import MessageItem from "./messageItem";
 import { v4 as uuidv4 } from "uuid";
-import { Ellipsis, Paperclip, SendIcon, XIcon } from "lucide-react";
+import { Ellipsis, Paperclip, SendIcon, XIcon, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { UploadFile } from "./uploadFile";
 
@@ -17,12 +17,28 @@ const ChatWindow = () => {
   const router = useRouter();
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const { currentRoomId, currentRoomData, toggleOption, fetchRooms } = useChatStore();
+  const [isMobile, setIsMobile] = useState(false);
+  const { currentRoomId, currentRoomData, toggleOption, fetchRooms, setCurrentRoomId } = useChatStore();
   const typingTimeoutRef = useRef(null);
   const [typingUsers, setTypingUsers] = useState([]);
   const { messages, addNewMessage, loadMoreMessage } = useMessage(currentRoomId);
   const messageListRef = useRef(null);
   const userAuthData = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleBackToSidebar = () => {
+    setCurrentRoomId(null);
+  };
 
   useEffect(() => {
     // Mỗi khi `messages` thay đổi, cuộn xuống cuối
@@ -206,8 +222,19 @@ const ChatWindow = () => {
     <div className="flex flex-col flex-1 h-full bg-background border-l border-border">
       {/* Header */}
       {currentRoomData && (
-        <div className="py-4 px-6 border-b border-border flex items-center justify-between bg-card/50">
-          <h1 className="text-lg font-semibold text-foreground">
+        <div className="py-3 sm:py-4 px-4 sm:px-6 border-b border-border flex items-center justify-between bg-card/50">
+          {/* Mobile back button */}
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 rounded-full mr-2"
+              onClick={handleBackToSidebar}
+            >
+              <ArrowLeft size={18} />
+            </Button>
+          )}
+          <h1 className="text-base sm:text-lg font-semibold text-foreground flex-1 truncate">
             {currentRoomData?.name}
           </h1>
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={toggleOption}>
@@ -217,12 +244,12 @@ const ChatWindow = () => {
       )}
 
       {!currentRoomId && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Ellipsis size={24} className="text-primary" />
+        <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Ellipsis size={20} className="sm:w-6 sm:h-6 text-primary" />
           </div>
-          <p className="text-xl font-medium text-foreground mb-2">No conversation selected</p>
-          <p className="text-sm text-muted-foreground text-center max-w-md">
+          <p className="text-lg sm:text-xl font-medium text-foreground mb-2 text-center">No conversation selected</p>
+          <p className="text-sm text-muted-foreground text-center max-w-md px-4">
             Choose a chat from the sidebar or create a new room to start messaging
           </p>
         </div>
@@ -233,7 +260,7 @@ const ChatWindow = () => {
         <div
           id="message-list"
           ref={messageListRef}
-          className="flex-1 overflow-y-auto p-5 space-y-4 bg-background/80 dark:bg-background/30"
+          className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4 bg-background/80 dark:bg-background/30"
         >
           {messages &&
             [...messages]
@@ -250,7 +277,7 @@ const ChatWindow = () => {
                 />
               ))}
           {typingUsers.length > 0 && (
-            <div className="flex items-center space-x-2 pl-4">
+            <div className="flex items-center space-x-2 pl-2 sm:pl-4">
               <div className="flex space-x-1">
                 <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0ms' }}></span>
                 <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }}></span>
@@ -266,17 +293,17 @@ const ChatWindow = () => {
 
       {/* Input Box */}
       {currentRoomId && (
-        <div className="p-4 border-t border-border bg-card/50">
+        <div className="p-3 sm:p-4 border-t border-border bg-card/50">
           {file && (
             <div className="mb-2 p-2 bg-accent/50 rounded-md flex items-center justify-between">
-              <div className="flex items-center">
-                <Paperclip className="w-4 h-4 mr-2 text-muted-foreground" />
-                <span className="text-sm text-foreground truncate max-w-[240px]">{file?.name}</span>
+              <div className="flex items-center min-w-0">
+                <Paperclip className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                <span className="text-sm text-foreground truncate">{file?.name}</span>
               </div>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-6 w-6 rounded-full hover:bg-destructive/10"
+                className="h-6 w-6 rounded-full hover:bg-destructive/10 flex-shrink-0 ml-2"
                 onClick={() => setFile(null)}
               >
                 <XIcon className="h-4 w-4 text-muted-foreground" />
@@ -287,10 +314,10 @@ const ChatWindow = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-full hover:bg-accent"
+              className="h-9 w-9 rounded-full hover:bg-accent flex-shrink-0"
               onClick={handleButtonClick}
             >
-              <Paperclip className="h-5 w-5 text-muted-foreground" />
+              <Paperclip className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
             </Button>
             <Input
               type="file"
@@ -304,7 +331,7 @@ const ChatWindow = () => {
                 type="text"
                 placeholder="Type a message..."
                 value={input}
-                className="pr-10 bg-background border-input focus-visible:ring-1 focus-visible:ring-offset-1 py-5"
+                className="pr-10 bg-background border-input focus-visible:ring-1 focus-visible:ring-offset-1 py-2 sm:py-5 text-sm sm:text-base"
                 onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                 onChange={handleTyping}
               />
@@ -312,11 +339,12 @@ const ChatWindow = () => {
             <Button 
               onClick={sendMessage}
               size="icon"
-              className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90"
+              className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90 flex-shrink-0"
               disabled={!input.trim() && !file}
             >
               <SendIcon className="h-4 w-4" />
-            </Button>          </div>
+            </Button>
+          </div>
         </div>
       )}
     </div>

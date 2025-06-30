@@ -12,8 +12,11 @@ const useChatStore = create(
           rooms: [],
           loading: false,
           error: null,
+          isMobile: false,
 
           setCurrentRoomId: (roomId) => set({ currentRoomId: roomId }),
+
+          setIsMobile: (isMobile) => set({ isMobile }),
 
           toggleOption: () => set((state) => ({ isOpenOption: !state.isOpenOption })),
 

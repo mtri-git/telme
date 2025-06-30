@@ -37,7 +37,7 @@ const LoginForm = () => {
   };
   return (
     <>
-      <form onSubmit={handleLogin} className="space-y-5">
+      <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <Input
@@ -46,7 +46,7 @@ const LoginForm = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="h-11 rounded-lg"
+            className="h-10 sm:h-11 rounded-lg text-sm sm:text-base"
             required
           />
         </div>
@@ -56,18 +56,19 @@ const LoginForm = () => {
             <a href="#" className="text-sm text-primary hover:underline">
               Forgot password?
             </a>
-          </div><Input
+          </div>
+          <Input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
-            className="h-11 rounded-lg"
+            className="h-10 sm:h-11 rounded-lg text-sm sm:text-base"
             required
           />
         </div>
         {error && <p className="text-destructive text-sm font-medium">{error}</p>}
-        <Button type="submit" className="w-full h-11 rounded-lg bg-primary text-primary-foreground hover:opacity-90">
+        <Button type="submit" className="w-full h-10 sm:h-11 rounded-lg bg-primary text-primary-foreground hover:opacity-90 text-sm sm:text-base">
           Sign in
         </Button>
         <div className="text-center">
@@ -75,7 +76,7 @@ const LoginForm = () => {
             <Button
               type="button"
               variant="link"
-              className="px-1 text-primary hover:underline"
+              className="px-1 text-primary hover:underline text-sm"
               onClick={() => (window.location.href = "/register")}
             >
               Sign up

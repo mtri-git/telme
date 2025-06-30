@@ -21,11 +21,11 @@ const LoginPage = () => {
   }
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md p-8 bg-card shadow-xl rounded-xl border border-border">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md p-6 sm:p-8 bg-card shadow-xl rounded-xl border border-border">
         <div className="flex flex-col items-center mb-6">
-          <h1 className="text-2xl font-bold text-center text-foreground">Welcome back</h1>
-          <p className="text-sm text-muted-foreground mt-2">Sign in to continue to Telme</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-center text-foreground">Welcome back</h1>
+          <p className="text-sm text-muted-foreground mt-2 text-center">Sign in to continue to Telme</p>
         </div>
         <LoginForm />
       </div>
