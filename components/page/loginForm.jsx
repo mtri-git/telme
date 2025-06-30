@@ -71,7 +71,7 @@ const LoginForm = () => {
           Sign in
         </Button>
         <div className="text-center">
-          <p className="text-sm text-muted-foreground">Don't have an account?{" "}
+          <p className="text-sm text-muted-foreground">Don&apos;t have an account?{" "}
             <Button
               type="button"
               variant="link"

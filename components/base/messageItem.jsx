@@ -31,9 +31,9 @@ function MessageItem({ content, sender, isSender, avatarUrl, createdAt, attachme
           )}
         </div>
       )}
-      <div        className={`max-w-[75%] px-4 py-2.5 text-sm shadow-sm ${
+      <div className={`max-w-[75%] px-4 py-2.5 text-sm shadow-sm ${
           isSender
-            ? "bg-primary text-primary-foreground rounded-t-2xl rounded-bl-2xl rounded-br-sm"
+            ? "bg-blue-600 text-white rounded-t-2xl rounded-bl-2xl rounded-br-sm"
             : "bg-muted text-muted-foreground rounded-t-2xl rounded-br-2xl rounded-bl-sm border border-border"
         }`}
       >
@@ -49,7 +49,7 @@ function MessageItem({ content, sender, isSender, avatarUrl, createdAt, attachme
           <MessageAttachment attachment={attachment} isSender={isSender} />
         )}
         <div className={`text-xs mt-1 flex items-center ${isSender ? 'justify-end' : 'justify-start'}`}>
-          <span className={`${isSender ? 'text-blue-200' : 'text-gray-400'} opacity-80`}>
+          <span className={`${isSender ? 'text-blue-200' : 'text-muted-foreground'} opacity-80`}>
             {timeAgo}
           </span>
         </div>
