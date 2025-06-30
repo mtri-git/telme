@@ -5,6 +5,7 @@ import ThemeToggle from "@/components/base/themeToggle";
 import { Toaster } from "react-hot-toast";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { AuthProvider } from "@/context/authContext";
+import PWAInstallPrompt from "@/components/base/PWAInstallPrompt";
 
 // const geistSans = localFont({
 //   src: "./fonts/GeistVF.woff",
@@ -20,6 +21,21 @@ import { AuthProvider } from "@/context/authContext";
 export const metadata = {
   title: "Telme",
   description: "Chat app",
+  manifest: "/manifest.json",
+  themeColor: "#1f2937",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Telme",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-title": "Telme",
+    "msapplication-TileColor": "#1f2937",
+    "msapplication-config": "/browserconfig.xml",
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -35,6 +51,7 @@ export default function RootLayout({ children }) {
             <SocketProvider>{children}</SocketProvider>
           </AuthLayout>
         </AuthProvider>
+        <PWAInstallPrompt />
       </body>
     </html>
   );
