@@ -1,5 +1,6 @@
 import React from "react";
 import { generateColorFromName, timeDiff } from "@/utils/function";
+import { renderMessageWithLinks } from "@/utils/linkUtils";
 import Image from "next/image";
 import MessageAttachment from "./messageAttachment";
 
@@ -42,8 +43,13 @@ function MessageItem({ content, sender, isSender, avatarUrl, createdAt, attachme
             {sender}
           </div>
         )}
-        <div className={`${attachment ? "mb-2" : ""} break-words`}>
-          {content}
+        <div className={`${attachment ? "mb-2" : ""} break-words leading-relaxed`}>
+          {renderMessageWithLinks(content, isSender, {
+            openInNewTab: true,
+            maxUrlLength: 35,
+            enableEmails: true,
+            enablePhones: true
+          })}
         </div>
         {attachment && (
           <MessageAttachment attachment={attachment} isSender={isSender} />
