@@ -307,6 +307,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ using Next.js and modern web technologies**
 
-[⭐ Star this repo](https://github.com/your-username/telme) | [🐛 Report Bug](https://github.com/your-username/telme/issues) | [💡 Request Feature](https://github.com/your-username/telme/issues)
+[⭐ Star this repo](https://github.com/mtri-git/telme) | [🐛 Report Bug](https://github.com/mtri-git/telme/issues) | [💡 Request Feature](https://github.com/mtri-git/telme/issues)
 
 </div>
