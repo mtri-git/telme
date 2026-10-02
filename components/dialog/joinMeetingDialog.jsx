@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { LogIn } from "lucide-react";
 import toast from "react-hot-toast";
 
 export function JoinMeetingDialog() {
@@ -29,11 +30,9 @@ export function JoinMeetingDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button
-          className="w-full text-white bg-blue-600 hover:bg-blue-700"
-          onClick={() => setIsOpen(true)} // Open the dialog
-        >
-          Join a meeting
+        <Button variant="outline" className="w-full">
+          <LogIn />
+          Join
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -48,8 +47,11 @@ export function JoinMeetingDialog() {
             <Input
               id="name"
               className="col-span-3"
+              placeholder="e.g. abc123"
+              autoComplete="off"
               value={code}
               onChange={(e) => setCode(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && onJoinMeeting()}
             />
           </div>
         </div>

@@ -1,22 +1,18 @@
 import { useEffect, useCallback } from 'react';
 
 export const usePerformance = () => {
-  // Preload critical resources
+  // Preconnect to the API and socket servers to save a round trip on first request
   const preloadResources = useCallback(() => {
     if (typeof window === 'undefined') return;
 
-    // Preconnect to API endpoints
-    const link = document.createElement('link');
-    link.rel = 'preconnect';
-    link.href = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    document.head.appendChild(link);
-
-    // Prefetch critical API calls
-    if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(() => {
-        // Prefetch auth status
-        fetch('/api/auth/me', { method: 'HEAD' }).catch(() => {});
-      });
+    const origins = [process.env.NEXT_PUBLIC_API_BASE_URL, process.env.NEXT_PUBLIC_SOCKET_URL];
+    for (const href of new Set(origins.filter(Boolean))) {
+      if (document.head.querySelector(`link[rel="preconnect"][href="${href}"]`)) continue;
+      const link = document.createElement('link');
+      link.rel = 'preconnect';
+      link.href = href;
+      link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
     }
   }, []);
 
@@ -33,27 +29,13 @@ export const usePerformance = () => {
     }
   }, []);
 
-  // Memory cleanup utilities
-  const cleanupListeners = useCallback(() => {
-    // Remove any global event listeners that might cause memory leaks
-    const events = ['resize', 'scroll', 'beforeunload'];
-    events.forEach(event => {
-      window.removeEventListener(event, () => {});
-    });
-  }, []);
-
   useEffect(() => {
     preloadResources();
-    
-    return () => {
-      cleanupListeners();
-    };
-  }, [preloadResources, cleanupListeners]);
+  }, [preloadResources]);
 
   return {
     scheduleWork,
     preloadResources,
-    cleanupListeners
   };
 };
 

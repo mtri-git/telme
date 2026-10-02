@@ -10,48 +10,54 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useState } from "react";
 import { Textarea } from "../ui/textarea";
-import axiosInstance from "@/utils/axios";
 import toast from "react-hot-toast";
 import useChatStore from "@/store/chatStore";
-import { ToolTip } from "../base/toolTip";
 
 export function CreateRoomDialog() {
   const [name, setName] = useState("");
   const [users, setUsers] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { fetchRooms } = useChatStore();
+  const { createRoom, setCurrentRoomId, setCurrentRoomData } = useChatStore();
 
-  const onCreateRoom = () => {
-    console.log("Creating room", name, users);
-    axiosInstance
-      .post("/rooms", {
-        name,
-        userEmails: users.split(",").map((email) => email.trim()),
-      })
-      .then((response) => {
-        console.log("🚀 ~ onCreateRoom ~ response", response);
-        fetchRooms();
-        toast.success("Room created successfully");
-      })
-      .catch((err) => {
-        console.log("🚀 ~ onCreateRoom");
-      })
-      .finally(() => {
-        setName("");
-        setUsers("");
+  const onCreateRoom = async (e) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error("Please enter a room name");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const room = await createRoom({
+        name: name.trim(),
+        userEmails: users.split(/[,\s]+/).map((email) => email.trim()).filter(Boolean),
       });
+      toast.success("Room created successfully");
+      setName("");
+      setUsers("");
+      setIsOpen(false);
+      // Open the new room right away
+      if (room?._id) {
+        setCurrentRoomId(room._id);
+        setCurrentRoomData(room);
+      }
+    } catch (err) {
+      toast.error(err.message || "Could not create room");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="primary" className="float-right">
-          <ToolTip content="Create room">
-            <Plus />
-          </ToolTip>
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" aria-label="Create room">
+          <Plus />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -61,6 +67,7 @@ export function CreateRoomDialog() {
             Create a new chat room. Click save when you&apos;re done.
           </DialogDescription>
         </DialogHeader>
+        <form onSubmit={onCreateRoom}>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
@@ -69,12 +76,14 @@ export function CreateRoomDialog() {
             <Input
               id="name"
               className="col-span-3"
+              required
+              autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="username" className="text-right">
+            <Label htmlFor="users" className="text-right">
               Users
             </Label>
             {/* description */}
@@ -88,10 +97,12 @@ export function CreateRoomDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={onCreateRoom}>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="animate-spin" />}
             Save
           </Button>
         </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

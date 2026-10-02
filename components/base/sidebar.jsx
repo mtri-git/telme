@@ -3,9 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import useChatStore from "@/store/chatStore";
-import socket from "@/utils/socketClient";
-import { LogOut, Binoculars, Badge } from "lucide-react";
-import { Card } from "../ui/card";
+import { LogOut, Binoculars, Video, MessageSquarePlus, Paperclip } from "lucide-react";
 import authService from "@/services/authService";
 import useAuthStore from "@/store/authStore";
 import { CreateRoomDialog } from "../dialog/createRoomDialog";
@@ -13,6 +11,19 @@ import { useRouter } from "next/navigation";
 import { ToolTip } from "./toolTip";
 import { getHelloString, showContent, timeDiff } from "@/utils/function";
 import { JoinMeetingDialog } from "../dialog/joinMeetingDialog";
+import ThemeToggle from "./themeToggle";
+import UserAvatar from "./userAvatar";
+import { cn } from "@/lib/utils";
+
+const RoomSkeleton = () => (
+  <li className="flex items-center gap-3 rounded-lg p-3">
+    <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+    <div className="flex-1 space-y-2">
+      <div className="h-3.5 w-2/3 rounded bg-muted animate-pulse" />
+      <div className="h-3 w-full rounded bg-muted animate-pulse" />
+    </div>
+  </li>
+);
 
 const Sidebar = () => {
   const router = useRouter();
@@ -21,8 +32,10 @@ const Sidebar = () => {
     fetchRooms,
     loading,
     error,
+    currentRoomId,
     setCurrentRoomId,
     setCurrentRoomData,
+    reset,
   } = useChatStore();
   const { logout, user } = useAuthStore();
 
@@ -30,19 +43,9 @@ const Sidebar = () => {
     fetchRooms();
   }, [fetchRooms]);
 
-  useEffect(() => {
-    if (!rooms) return;
-    console.log(rooms);
-    for (let room of rooms) {
-      socket.emit("join_room", {
-        roomId: room._id,
-      });
-    }
-  }, [rooms]);
-
   const onClickLogout = () => {
-    console.log("Logout");
     logout();
+    reset();
     authService.logout();
   };
 
@@ -56,111 +59,139 @@ const Sidebar = () => {
     const randomCode = Math.random().toString(36).substring(7);
     window.open("/we-meet?code="+randomCode, "_blank");
   }
+
+  const isFirstLoad = loading && (!rooms || rooms.length === 0);
+
   return (
-    <aside className="flex flex-col w-full sm:w-72 bg-card border-r border-border h-full dark:bg-card min-w-0 max-w-none sm:max-w-none">
-      <div className="p-4 sm:p-5 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl sm:text-xl font-bold text-foreground">Chats</h2>
-          <div className="flex space-x-1">
-            <ToolTip content="Explore room">
+    <aside className="flex flex-col w-full md:w-80 bg-card border-r border-border h-full min-w-0 safe-area-top">
+      <div className="px-4 pt-4 pb-3 border-b border-border">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Chats</h2>
+          <div className="flex items-center gap-1">
+            <ToolTip content="Explore rooms">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-full hover:bg-accent"
+                className="h-8 w-8 rounded-full"
                 onClick={() => router.push("/room")}
+                aria-label="Explore rooms"
               >
-                <Binoculars size={18} className="text-foreground" />
+                <Binoculars />
               </Button>
             </ToolTip>
             <CreateRoomDialog />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Button 
-            variant="default" 
-            className="w-full bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800 transition-colors text-base sm:text-base"
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            className="bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800"
             onClick={onClickStartAMeeting}
           >
-            <span className="hidden sm:inline">Start a meeting</span>
-            <span className="sm:hidden">Start meeting</span>
+            <Video />
+            New meeting
           </Button>
           <JoinMeetingDialog />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 sm:p-3 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
-        <ul className="space-y-2">
+      <nav aria-label="Chat rooms" className="flex-1 overflow-y-auto p-2 scrollbar-thin">
+        <ul className="space-y-0.5">
           {error && <p className="text-destructive text-sm p-2">Error: {error}</p>}
-          {rooms && rooms.length === 0 && (
-            <div className="text-center py-8 sm:py-8">
-              <p className="text-muted-foreground text-base sm:text-base">No chats yet</p>
-              <p className="text-sm sm:text-sm text-muted-foreground mt-1">Create a room to start chatting</p>
-            </div>
+          {isFirstLoad && Array.from({ length: 6 }).map((_, i) => <RoomSkeleton key={i} />)}
+          {!isFirstLoad && rooms && rooms.length === 0 && (
+            <li className="flex flex-col items-center text-center py-12 px-4">
+              <MessageSquarePlus className="h-10 w-10 text-muted-foreground/60 mb-3" />
+              <p className="text-foreground font-medium">No chats yet</p>
+              <p className="text-sm text-muted-foreground mt-1">Create a room to start chatting</p>
+            </li>
           )}
-          {rooms &&
-            rooms?.map((room) => (
+          {rooms?.map((room) => {
+            const isActive = room._id === currentRoomId;
+            const lastMessage = room.last_message;
+            return (
               <li key={room._id}>
-                <Card className="hover:bg-accent/50 transition-colors relative overflow-hidden border-border">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start p-3 sm:p-3 h-auto"
-                    onClick={() => onClickRoomItem(room._id)}
-                  >
-                    <div className="flex flex-col items-start w-full">
-                      <div className="flex items-center w-full">
-                        <span className="font-medium text-foreground truncate text-base sm:text-base">{room.name}</span>
-                        {room.is_new && (
-                          <span className="h-2 w-2 rounded-full bg-blue-500 ml-1.5 flex-shrink-0"></span>
+                <button
+                  type="button"
+                  onClick={() => onClickRoomItem(room._id)}
+                  aria-current={isActive ? "true" : undefined}
+                  className={cn(
+                    "w-full flex items-center gap-3 rounded-lg p-3 text-left transition-colors touch-feedback",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    isActive ? "bg-accent" : "hover:bg-accent/60"
+                  )}
+                >
+                  <UserAvatar name={room.name} size="lg" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "truncate text-sm text-foreground",
+                          room.is_new ? "font-semibold" : "font-medium"
                         )}
-                      </div>
-
-                      {room.last_message && (
-                        <div className="w-full mt-1.5">
-                          <div className="flex items-center">
-                            <span className="text-xs font-medium text-muted-foreground truncate">
-                              {room.last_message?.sender?.fullname}:
-                            </span>
-                            {room?.last_message?.attachment && (
-                              <span className="text-xs text-muted-foreground ml-1">
-                                [{room?.last_message?.attachment?.fileType}]
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <span className="text-xs text-muted-foreground truncate max-w-[200px] sm:max-w-[180px]">
-                              {showContent(room?.last_message?.content)}
-                            </span>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap ml-1">
-                              {timeDiff(room?.last_message?.created_at)}
-                            </span>
-                          </div>
-                        </div>
+                      >
+                        {room.name}
+                      </span>
+                      {lastMessage && (
+                        <span className="ml-auto flex-shrink-0 text-[11px] text-muted-foreground">
+                          {timeDiff(lastMessage.created_at)}
+                        </span>
                       )}
                     </div>
-                  </Button>
-                </Card>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span
+                        className={cn(
+                          "truncate text-xs",
+                          room.is_new ? "text-foreground" : "text-muted-foreground"
+                        )}
+                      >
+                        {lastMessage ? (
+                          <>
+                            <span className="font-medium">{lastMessage.sender?.fullname}: </span>
+                            {lastMessage.attachment && (
+                              <Paperclip className="inline h-3 w-3 mr-0.5 -mt-0.5" />
+                            )}
+                            {showContent(lastMessage.content) ||
+                              (lastMessage.attachment ? lastMessage.attachment.fileType : "")}
+                          </>
+                        ) : (
+                          "No messages yet"
+                        )}
+                      </span>
+                      {room.is_new && (
+                        <span
+                          className="ml-auto h-2 w-2 flex-shrink-0 rounded-full bg-blue-500"
+                          aria-label="Unread"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </button>
               </li>
-            ))}
+            );
+          })}
         </ul>
-      </div>
+      </nav>
 
-      <div className="border-t border-border p-4 sm:p-4">
-        <div className="flex flex-col space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <div className="font-medium text-foreground text-base sm:text-base truncate">{user?.user?.fullname}</div>
-              <div className="text-sm text-muted-foreground truncate">{getHelloString()}</div>
-            </div>
+      <div className="border-t border-border p-3 safe-area-bottom">
+        <div className="flex items-center gap-3">
+          <UserAvatar name={user?.fullname} />
+          <div className="min-w-0 flex-1">
+            <div className="font-medium text-foreground text-sm truncate">{user?.fullname}</div>
+            <div className="text-xs text-muted-foreground truncate">{getHelloString()}</div>
+          </div>
+          <ThemeToggle />
+          <ToolTip content="Log out">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-full hover:bg-destructive/10 flex-shrink-0 ml-2"
+              className="h-8 w-8 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={onClickLogout}
+              aria-label="Log out"
             >
-              <LogOut size={18} className="text-destructive" />
+              <LogOut />
             </Button>
-          </div>
+          </ToolTip>
         </div>
       </div>
     </aside>

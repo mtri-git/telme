@@ -6,8 +6,7 @@ html {
   scroll-behavior: smooth;
 }
 body {
-  font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.3s, color 0.3s;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
 @layer base {
@@ -91,6 +90,11 @@ body {
     font-size: 16px;
   }
   
+  /* Keep scroll from chaining to the page (pull-to-refresh, bounce) */
+  .overflow-y-auto {
+    overscroll-behavior: contain;
+  }
+
   /* Smooth scrolling on mobile */
   .overflow-y-auto {
     -webkit-overflow-scrolling: touch;
@@ -122,5 +126,26 @@ body {
   
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Thin, theme-aware scrollbars on larger screens */
+@media (min-width: 641px) {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

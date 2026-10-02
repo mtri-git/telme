@@ -8,8 +8,8 @@ import authService from "@/services/authService";
 import toast from "react-hot-toast";
 
 const LoginForm = () => {
-  const [email, setEmail] = useState("vmtri20@gmail.com");
-  const [password, setPassword] = useState("12345678");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
@@ -21,9 +21,9 @@ const LoginForm = () => {
         loading: "Logging in...",
         success: "Logged in successfully",
         error: (err) => {
-          console.log("🚀 ~ toast.promise ~ err:", err);
-          setError(err?.response?.data?.message);
-          return "An error occurred";
+          const message = err?.response?.data?.message || "Unable to log in. Please try again.";
+          setError(message);
+          return message;
         },
       });
 
@@ -32,7 +32,7 @@ const LoginForm = () => {
       // go to home
       window.location.href = "/";
     } catch (err) {
-      setError("An unexpected error occurred");
+      // Message already shown by toast.promise / setError above
     }
   };
   return (
@@ -43,6 +43,7 @@ const LoginForm = () => {
           <Input
             id="email"
             type="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
@@ -60,6 +61,7 @@ const LoginForm = () => {
           <Input
             id="password"
             type="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"

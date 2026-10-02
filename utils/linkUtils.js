@@ -9,13 +9,6 @@ export const isValidUrl = (string) => {
   }
 };
 
-export const extractUrls = (text) => {
-  if (!text) return [];
-  
-  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}[^\s]*)/g;
-  return text.match(urlRegex) || [];
-};
-
 export const formatUrl = (url) => {
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     return 'https://' + url;
@@ -28,94 +21,109 @@ export const truncateUrl = (url, maxLength = 50) => {
   return url.substring(0, maxLength) + '...';
 };
 
-// Enhanced patterns for different types of clickable content
+// Characters a link may not end with (so "see google.com." doesn't swallow the period)
+const TRAILING = `[^\\s<>.,:;"'!?)\\]]`;
+const TLDS = 'com|org|net|edu|gov|mil|int|co|io|me|ly|to|tv|fm|gg|vn|xyz|tech|app|dev|blog|shop|news|info|online|site|website|store|cloud|ai|data';
+
+// Pattern sources (no capturing groups, no global flag) so they can be combined safely
 export const patterns = {
-  url: /(https?:\/\/(?:[-\w.])+(?:\:[0-9]+)?(?:\/(?:[\w\/_.\-~!*'();@&=+$,?#\[\]])*)?|www\.(?:[-\w.])+(?:\:[0-9]+)?(?:\/(?:[\w\/_.\-~!*'();@&=+$,?#\[\]])*)?|(?:[-\w.])+\.(?:com|org|net|edu|gov|mil|int|co|io|me|ly|to|tv|fm|gg|tk|ml|ga|cf|xyz|tech|app|dev|blog|shop|news|info|online|site|website|store|cloud|ai|data)(?:\/(?:[\w\/_.\-~!*'();@&=+$,?#\[\]])*)?)/gi,
-  email: /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g,
-  phone: /(\+?[1-9]\d{1,14}|\(\d{3}\)\s?\d{3}-?\d{4}|\d{3}-?\d{3}-?\d{4})/g
+  email: `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}`,
+  url:
+    `https?:\\/\\/[^\\s<>]*${TRAILING}` +
+    `|www\\.[^\\s<>]*${TRAILING}` +
+    `|\\b(?:[-a-zA-Z0-9]+\\.)+(?:${TLDS})\\b(?:\\/[^\\s<>]*${TRAILING})?`,
+  // 9–15 digits, optionally grouped with spaces, dots or dashes; plain numbers like "2024" are ignored
+  phone: `(?:\\+\\d|\\b\\d)(?:[\\s.-]?\\d){8,14}\\b`,
 };
+
+export const extractUrls = (text) => {
+  if (!text) return [];
+  return text.match(new RegExp(patterns.url, 'gi')) || [];
+};
+
+const linkClassName = (isSender) =>
+  `underline underline-offset-2 break-all rounded transition-colors ${
+    isSender
+      ? 'text-white hover:text-blue-100'
+      : 'text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300'
+  }`;
 
 export const renderMessageWithLinks = (text, isSender, options = {}) => {
   if (!text) return null;
-  
+
   const {
     openInNewTab = true,
     maxUrlLength = 50,
     enableEmails = true,
     enablePhones = true
   } = options;
-  
-  // Combined regex for all patterns
-  const combinedRegex = new RegExp(
-    `(${patterns.url.source}|${enableEmails ? patterns.email.source : ''}|${enablePhones ? patterns.phone.source : ''})`,
-    'gi'
-  );
-  
-  const parts = text.split(combinedRegex).filter(part => part !== undefined && part !== '');
-  
-  return parts.map((part, index) => {
-    // Check if it's a URL
-    if (patterns.url.test(part)) {
-      const formattedUrl = formatUrl(part);
-      const displayUrl = truncateUrl(part, maxUrlLength);
-      
-      return (
+
+  // Email goes first so "a@b.com" isn't split into text + the URL "b.com"
+  const alternatives = [
+    enableEmails && `(?<email>${patterns.email})`,
+    `(?<url>${patterns.url})`,
+    enablePhones && `(?<phone>${patterns.phone})`,
+  ].filter(Boolean);
+  const combinedRegex = new RegExp(alternatives.join('|'), 'gi');
+
+  const parts = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(combinedRegex)) {
+    const [value] = match;
+    const { email, url, phone } = match.groups;
+    const key = match.index;
+
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    lastIndex = match.index + value.length;
+
+    if (url) {
+      const formattedUrl = formatUrl(url);
+      parts.push(
         <a
-          key={index}
+          key={key}
           href={formattedUrl}
           target={openInNewTab ? "_blank" : "_self"}
           rel={openInNewTab ? "noopener noreferrer" : undefined}
-          className={`inline-flex items-center underline hover:no-underline transition-all duration-200 rounded px-1 ${
-            isSender 
-              ? 'text-blue-100 hover:text-white hover:bg-blue-500/20' 
-              : 'text-blue-600 hover:text-blue-800 hover:bg-blue-100/50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-500/20'
-          }`}
+          className={linkClassName(isSender)}
           onClick={(e) => e.stopPropagation()}
           title={formattedUrl}
         >
-          🔗 {displayUrl}
+          {truncateUrl(url, maxUrlLength)}
         </a>
       );
-    }
-    
-    // Check if it's an email
-    if (enableEmails && patterns.email.test(part)) {
-      return (
+    } else if (email) {
+      parts.push(
         <a
-          key={index}
-          href={`mailto:${part}`}
-          className={`inline-flex items-center underline hover:no-underline transition-all duration-200 rounded px-1 ${
-            isSender 
-              ? 'text-blue-100 hover:text-white hover:bg-blue-500/20' 
-              : 'text-blue-600 hover:text-blue-800 hover:bg-blue-100/50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-500/20'
-          }`}
+          key={key}
+          href={`mailto:${email}`}
+          className={linkClassName(isSender)}
           onClick={(e) => e.stopPropagation()}
-          title={`Send email to ${part}`}
+          title={`Send email to ${email}`}
         >
-          📧 {part}
+          {email}
         </a>
       );
-    }
-    
-    // Check if it's a phone number
-    if (enablePhones && patterns.phone.test(part)) {
-      return (
+    } else if (phone) {
+      parts.push(
         <a
-          key={index}
-          href={`tel:${part.replace(/\D/g, '')}`}
-          className={`inline-flex items-center underline hover:no-underline transition-all duration-200 rounded px-1 ${
-            isSender 
-              ? 'text-blue-100 hover:text-white hover:bg-blue-500/20' 
-              : 'text-blue-600 hover:text-blue-800 hover:bg-blue-100/50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-500/20'
-          }`}
+          key={key}
+          href={`tel:${phone.replace(/[^\d+]/g, '')}`}
+          className={linkClassName(isSender)}
           onClick={(e) => e.stopPropagation()}
-          title={`Call ${part}`}
+          title={`Call ${phone}`}
         >
-          📞 {part}
+          {phone}
         </a>
       );
     }
-    
-    return part;
-  });
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts;
 };

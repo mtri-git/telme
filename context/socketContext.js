@@ -1,35 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import React, { createContext, useContext } from "react";
+import socket from "@/utils/socketClient";
 
-const SocketContext = createContext();
+const SocketContext = createContext(null);
 
+// Exposes the app's single shared socket. Connecting is handled where the user is known
+// (see components/page/home.jsx) so we don't open an extra, unauthenticated connection.
 export const SocketProvider = ({ children }) => {
-  const [socket, setSocket] = useState(null);
-
-  useEffect(() => {
-    const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-      autoConnect: false, // Không tự động kết nối
-      transports: ["websocket"], // Sử dụng WebSocket
-      reconnectionAttempts: 5, // Số lần thử kết nối lại
-    });
-
-    // Kết nối socket
-    newSocket.connect();
-
-    // Cập nhật socket trong state
-    setSocket(newSocket);
-
-    // Ngắt kết nối khi component bị hủy
-    return () => {
-      newSocket.disconnect();
-    };
-  }, []);
-
-  return (
-    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
-  );
+  return <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>;
 };
 
 export const useSocket = () => {

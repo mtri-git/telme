@@ -2,87 +2,117 @@
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useLayoutEffect, useState, useRef } from "react";
 import socket from "@/utils/socketClient";
 import useChatStore from "@/store/chatStore";
 import useAuthStore from "@/store/authStore";
 import useMessage from "@/hooks/useMessage";
 import MessageItem from "./messageItem";
-import { v4 as uuidv4 } from "uuid";
-import { Ellipsis, Paperclip, SendIcon, XIcon, ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { UploadFile } from "./uploadFile";
+import { Ellipsis, Paperclip, SendIcon, XIcon, ArrowLeft, MessagesSquare } from "lucide-react";
+import UserAvatar from "./userAvatar";
+import toast from "react-hot-toast";
+
+// Distance (px) from the bottom within which new messages auto-scroll into view
+const STICK_TO_BOTTOM_THRESHOLD = 120;
+// Must match MAX_UPLOAD_MB on the API
+const MAX_UPLOAD_MB = 10;
 
 const ChatWindow = () => {
-  const router = useRouter();
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const { currentRoomId, currentRoomData, toggleOption, fetchRooms, setCurrentRoomId } = useChatStore();
+  const { currentRoomId, currentRoomData, toggleOption, fetchRooms, setCurrentRoomId, applyIncomingMessage } = useChatStore();
   const typingTimeoutRef = useRef(null);
   const [typingUsers, setTypingUsers] = useState([]);
-  const { messages, addNewMessage, loadMoreMessage } = useMessage(currentRoomId);
+  const { messages, loading, hasMore, addNewMessage, updateMessage, loadMoreMessage } = useMessage(currentRoomId);
   const messageListRef = useRef(null);
-  const userAuthData = useAuthStore((state) => state.user);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const currentUser = useAuthStore((state) => state.user);
+  const currentUserId = currentUser?._id;
+  const isNearBottomRef = useRef(true);
+  const heightBeforeLoadMoreRef = useRef(null);
+  const newestMessageIdRef = useRef(null);
 
   const handleBackToSidebar = () => {
     setCurrentRoomId(null);
   };
 
+  // Reset scroll anchoring when switching rooms
   useEffect(() => {
-    // Mỗi khi `messages` thay đổi, cuộn xuống cuối
-    if (messageListRef.current) {
-      setTimeout(() => {
-        messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
-      }, 100);
+    isNearBottomRef.current = true;
+    heightBeforeLoadMoreRef.current = null;
+    newestMessageIdRef.current = null;
+    setTypingUsers([]);
+  }, [currentRoomId]);
+
+  // Keep the scroll position stable: stay anchored when older messages are loaded,
+  // and only follow new messages if the user is already near the bottom (or sent it)
+  useLayoutEffect(() => {
+    const el = messageListRef.current;
+    if (!el) return;
+
+    const newest = messages?.[0];
+    const hasNewMessage = !!newest && newest._id !== newestMessageIdRef.current;
+    newestMessageIdRef.current = newest?._id ?? null;
+
+    if (heightBeforeLoadMoreRef.current !== null && !hasNewMessage) {
+      el.scrollTop = el.scrollHeight - heightBeforeLoadMoreRef.current;
+      heightBeforeLoadMoreRef.current = null;
+      return;
+    }
+
+    if (isNearBottomRef.current || (hasNewMessage && newest.is_sender)) {
+      el.scrollTop = el.scrollHeight;
     }
   }, [messages, typingUsers]);
+
+  // A load-more that returned nothing (or failed) must not leave a stale anchor behind
+  useEffect(() => {
+    if (!loading) heightBeforeLoadMoreRef.current = null;
+  }, [loading]);
+
+  // Images/videos finish loading after layout; keep the view pinned to the bottom when they do
+  const handleMediaLoad = () => {
+    const el = messageListRef.current;
+    if (el && isNearBottomRef.current) el.scrollTop = el.scrollHeight;
+  };
 
   // listen event
   useEffect(() => {
     const handleReceiveMessage = (data) => {
-      
-      const { userId, roomId, message, sender, attachment } = data;
-      fetchRooms();
-      
-      if (roomId !== currentRoomId) return;
+      const { userId, roomId, message, sender, attachment, messageId, created_at } = data || {};
+      const isOwnMessage = userId === currentUserId;
+      const createdAt = created_at || new Date();
 
-      const currentUserId = userAuthData?.user?._id;
-      if (userId === currentUserId) return;
+      // Update the sidebar preview locally instead of refetching every room on every message
+      const known = applyIncomingMessage({
+        roomId,
+        lastMessage: { _id: messageId, content: message, attachment, sender, created_at: createdAt },
+        markUnread: !isOwnMessage && roomId !== currentRoomId,
+      });
+      if (!known) fetchRooms();
 
-      const messageData = {
-        _id: Date.now(),
+      // Own messages are already shown optimistically
+      if (roomId !== currentRoomId || isOwnMessage) return;
+
+      addNewMessage({
+        _id: messageId || `remote-${Date.now()}`,
         content: message,
         is_sender: false,
-        created_at: new Date(),
+        created_at: createdAt,
         attachment,
         sender,
-      }
-      addNewMessage(messageData);
-
+      });
     };
 
     const handleUserTyping = (data) => {
-      const { userId, sender, roomId } = data;
-      const currentUserId = userAuthData?.user?._id;
-      if (roomId !== currentRoomId) return;
-      if (userId === currentUserId) return;
-      setTypingUsers((prev) => [...new Set([...prev, sender])]); // Thêm userId vào danh sách typing
+      const { userId, sender, roomId } = data || {};
+      if (roomId !== currentRoomId || userId === currentUserId || !sender) return;
+      setTypingUsers((prev) =>
+        prev.some((user) => user._id === sender._id) ? prev : [...prev, sender]
+      );
     };
 
     const handleUserStopTyping = (data) => {
-      const { userId } = data;
+      const { userId } = data || {};
       setTypingUsers((prev) => prev.filter((user) => user._id !== userId)); // Xóa userId khỏi danh sách typing
     };
 
@@ -95,87 +125,91 @@ const ChatWindow = () => {
       socket.off("user_room_typing", handleUserTyping);
       socket.off("user_stop_room_typing", handleUserStopTyping);
     };
-  }, [addNewMessage, currentRoomId, fetchRooms, userAuthData?.user?._id]);
+  }, [addNewMessage, applyIncomingMessage, currentRoomId, currentUserId, fetchRooms]);
 
-  // listen when scroll to top
-  useEffect(() => {
-    const handleScroll = (e) => {
-      if (e.target.scrollTop === 0 && messages.length > 0) {
-        loadMoreMessage();
-      }
-    };
+  const handleScroll = (e) => {
+    const el = e.currentTarget;
+    isNearBottomRef.current =
+      el.scrollHeight - el.scrollTop - el.clientHeight < STICK_TO_BOTTOM_THRESHOLD;
 
-    if (messageListRef.current) {
-      messageListRef.current.addEventListener("scroll", handleScroll);
+    if (el.scrollTop === 0 && messages.length > 0 && hasMore && !loading) {
+      heightBeforeLoadMoreRef.current = el.scrollHeight;
+      loadMoreMessage();
     }
+  };
 
-    return () => {
-      if (messageListRef.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        messageListRef.current.removeEventListener("scroll", handleScroll);
-      }
-    };
-  }, [currentRoomId, loadMoreMessage, messages.length]);
+  const stopTyping = () => {
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    if (isTyping) {
+      socket.emit("stop_room_typing", { roomId: currentRoomId }); // Báo ngừng typing
+      setIsTyping(false);
+    }
+  };
 
   const sendMessage = () => {
     if (!input.trim() && !file) return;
+    if (!currentRoomId) return;
 
-    if (!currentRoomId) {
-      console.log("No room selected");
-      return;
-    }
-
+    const tempId = `local-${Date.now()}`;
     const data = {
       roomId: currentRoomId,
       message: input,
-      sender: userAuthData?.user,
     };
     if (file) {
       data.file = file;
+      data.fileName = file.name;
+      data.fileType = file.type;
     }
-    socket.emit("room_message", data);
 
-    socket.emit("stop_room_typing", {
-      roomId: currentRoomId,
-      sender: userAuthData?.user,
-    }); // Báo ngừng typing khi gửi tin nhắn
+    // Uploads can take a while; plain text should be acknowledged quickly
+    socket.timeout(file ? 120000 : 15000).emit("room_message", data, (err, response) => {
+      if (err || !response?.ok) {
+        updateMessage(tempId, { failed: true });
+        toast.error(response?.error || "Message could not be sent. Check your connection.");
+        return;
+      }
+      updateMessage(tempId, {
+        _id: response.messageId,
+        ...(response.attachment && { attachment: response.attachment }),
+      });
+    });
+
+    stopTyping();
 
     const messageData = {
-      _id: Date.now(),
+      _id: tempId,
+      clientId: tempId,
       content: input,
       is_sender: true,
-      sender: userAuthData?.user,
+      sender: currentUser,
       created_at: new Date(),
     };
 
     if (file) {
-      // upload file to tmp blob
-      const blob = new Blob([file], { type: file.type });
+      // Show a local preview until the upload finishes
       messageData.attachment = {
-        fileUrl: URL.createObjectURL(blob),
+        fileUrl: URL.createObjectURL(file),
         name: file.name,
         fileType: file.type,
         fileFormat: file.name.split(".").pop(),
       };
     }
 
-    console.log("🚀 ~ sendMessage ~ messageData", messageData);
-
     addNewMessage(messageData);
-    fetchRooms();
+    applyIncomingMessage({
+      roomId: currentRoomId,
+      lastMessage: messageData,
+      markUnread: false,
+    });
     setInput("");
     setFile(null);
-    setIsTyping(false);
   };
 
   const handleTyping = (e) => {
     setInput(e.target.value);
 
     if (!isTyping) {
-      socket.emit("room_typing", {
-        roomId: currentRoomId,
-        sender: userAuthData?.user,
-      });
+      socket.emit("room_typing", { roomId: currentRoomId });
       setIsTyping(true);
     }
 
@@ -185,21 +219,24 @@ const ChatWindow = () => {
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      console.log("Stop typing");
-      socket.emit("stop_room_typing", {
-        roomId: currentRoomId,
-        sender: userAuthData?.user,
-      });
+      socket.emit("stop_room_typing", { roomId: currentRoomId });
       setIsTyping(false);
     }, 2000);
   };
 
-  const getSenderNames = () => {
-    return typingUsers
-      .map((data) => {
-        return data.fullname;
-      })
-      .join(", ");
+  const handleKeyDown = (e) => {
+    // Ignore Enter while an IME (e.g. Vietnamese/Japanese input) is still composing
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const getTypingText = () => {
+    const names = typingUsers.map((data) => data?.fullname);
+    if (names.length === 1) return `${names[0]} is typing…`;
+    if (names.length === 2) return `${names[0]} and ${names[1]} are typing…`;
+    return `${names.length} people are typing…`;
   };
 
   // file upload
@@ -210,46 +247,66 @@ const ChatWindow = () => {
 
   const handleFileChange = (event) => {
     const selectedFile = event?.target?.files?.[0];
-    if (selectedFile) {
+    if (selectedFile && selectedFile.size > MAX_UPLOAD_MB * 1024 * 1024) {
+      toast.error(`File is too large (max ${MAX_UPLOAD_MB} MB)`);
+    } else if (selectedFile) {
       setFile(selectedFile);
     }
+    // Allow picking the same file again after removing it
+    event.target.value = "";
   };
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
   };
+
+  const memberCount = currentRoomData?.users?.length;
+
   return (
-    <div className="flex flex-col flex-1 h-full bg-background border-l border-border">
+    <div className="flex flex-col flex-1 min-w-0 h-full bg-background">
       {/* Header */}
       {currentRoomData && (
-        <div className="py-3 sm:py-4 px-4 sm:px-6 border-b border-border flex items-center justify-between bg-card/50">
+        <header className="flex-shrink-0 min-h-16 px-2 sm:px-4 py-2 border-b border-border flex items-center gap-2 sm:gap-3 bg-card safe-area-top">
           {/* Mobile back button */}
-          {isMobile && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 rounded-full mr-2"
-              onClick={handleBackToSidebar}
-            >
-              <ArrowLeft size={18} />
-            </Button>
-          )}
-          <h1 className="text-base sm:text-lg font-semibold text-foreground flex-1 truncate">
-            {currentRoomData?.name}
-          </h1>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={toggleOption}>
-            <Ellipsis size={18} />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-full md:hidden"
+            onClick={handleBackToSidebar}
+            aria-label="Back to chats"
+          >
+            <ArrowLeft />
           </Button>
-        </div>
+          <UserAvatar name={currentRoomData?.name} />
+          <div className="min-w-0 flex-1">
+            <h1 className="text-sm sm:text-base font-semibold text-foreground truncate">
+              {currentRoomData?.name}
+            </h1>
+            {memberCount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {memberCount} {memberCount === 1 ? "member" : "members"}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-full"
+            onClick={toggleOption}
+            aria-label="Room info"
+          >
+            <Ellipsis />
+          </Button>
+        </header>
       )}
 
       {!currentRoomId && (
-        <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Ellipsis size={20} className="sm:w-6 sm:h-6 text-primary" />
+        <div className="flex-1 flex flex-col items-center justify-center p-6">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+            <MessagesSquare className="h-7 w-7 text-muted-foreground" />
           </div>
-          <p className="text-lg sm:text-xl font-medium text-foreground mb-2 text-center">No conversation selected</p>
-          <p className="text-sm text-muted-foreground text-center max-w-md px-4">
+          <p className="text-lg font-semibold text-foreground mb-1 text-center">No conversation selected</p>
+          <p className="text-sm text-muted-foreground text-center max-w-sm">
             Choose a chat from the sidebar or create a new room to start messaging
           </p>
         </div>
@@ -260,32 +317,34 @@ const ChatWindow = () => {
         <div
           id="message-list"
           ref={messageListRef}
-          className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4 bg-background/80 dark:bg-background/30"
+          onScroll={handleScroll}
+          onLoadCapture={handleMediaLoad}
+          role="log"
+          aria-live="polite"
+          className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 scrollbar-thin bg-muted/30"
         >
           {messages &&
             [...messages]
-              .slice()
               .reverse()
               .map((message) => (
                 <MessageItem
-                  key={`message-${message._id}`}
+                  key={`message-${message.clientId ?? message._id}`}
                   content={message.content}
                   sender={message?.sender?.fullname}
                   isSender={message.is_sender}
                   createdAt={message.created_at}
                   attachment={message?.attachment}
+                  failed={message.failed}
                 />
               ))}
           {typingUsers.length > 0 && (
-            <div className="flex items-center space-x-2 pl-2 sm:pl-4">
-              <div className="flex space-x-1">
-                <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+            <div className="flex items-center gap-2 pl-9 sm:pl-10 pt-1">
+              <div className="flex items-center gap-1 rounded-full bg-card border border-border px-3 py-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '300ms' }}></span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {getSenderNames()} is typing...
-              </p>
+              <p className="text-xs text-muted-foreground">{getTypingText()}</p>
             </div>
           )}
         </div>
@@ -293,56 +352,59 @@ const ChatWindow = () => {
 
       {/* Input Box */}
       {currentRoomId && (
-        <div className="p-3 sm:p-4 border-t border-border bg-card/50">
+        <div className="flex-shrink-0 px-3 py-3 sm:px-4 border-t border-border bg-card safe-area-bottom">
           {file && (
-            <div className="mb-2 p-2 bg-accent/50 rounded-md flex items-center justify-between">
+            <div className="mb-2 px-3 py-2 bg-muted rounded-lg flex items-center justify-between">
               <div className="flex items-center min-w-0">
                 <Paperclip className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm text-foreground truncate">{file?.name}</span>
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6 rounded-full hover:bg-destructive/10 flex-shrink-0 ml-2"
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full flex-shrink-0 ml-2"
                 onClick={() => setFile(null)}
+                aria-label="Remove attachment"
               >
-                <XIcon className="h-4 w-4 text-muted-foreground" />
+                <XIcon className="text-muted-foreground" />
               </Button>
             </div>
           )}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-full hover:bg-accent flex-shrink-0"
+              className="h-10 w-10 rounded-full flex-shrink-0 text-muted-foreground"
               onClick={handleButtonClick}
+              aria-label="Attach file"
             >
-              <Paperclip className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+              <Paperclip className="!size-5" />
             </Button>
-            <Input
+            <input
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
               id="file-upload"
             />
-            <div className="flex-1 relative">
-              <Input
-                type="text"
-                placeholder="Type a message..."
-                value={input}
-                className="pr-10 bg-background border-input focus-visible:ring-1 focus-visible:ring-offset-1 py-2 sm:py-5 text-sm sm:text-base"
-                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                onChange={handleTyping}
-              />
-            </div>
-            <Button 
+            <Input
+              type="text"
+              placeholder="Type a message..."
+              aria-label="Message"
+              value={input}
+              enterKeyHint="send"
+              className="flex-1 h-10 rounded-full bg-muted border-transparent px-4 hover:border-transparent focus-visible:ring-1 focus-visible:ring-offset-0"
+              onKeyDown={handleKeyDown}
+              onChange={handleTyping}
+            />
+            <Button
               onClick={sendMessage}
               size="icon"
-              className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90 flex-shrink-0"
+              className="h-10 w-10 rounded-full flex-shrink-0"
               disabled={!input.trim() && !file}
+              aria-label="Send message"
             >
-              <SendIcon className="h-4 w-4" />
+              <SendIcon />
             </Button>
           </div>
         </div>

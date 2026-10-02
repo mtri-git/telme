@@ -9,7 +9,8 @@ export default withPWA({
   skipWaiting: true,
   runtimeCaching: [
     {
-      urlPattern: /^https?.*/,
+      // Only cache this app's own assets/pages; API calls go straight to the network
+      urlPattern: ({ sameOrigin, url }) => sameOrigin && !url.pathname.startsWith('/api/'),
       handler: 'NetworkFirst',
       options: {
         cacheName: 'offlineCache',

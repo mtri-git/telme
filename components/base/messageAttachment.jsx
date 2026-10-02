@@ -10,15 +10,16 @@ export default function MessageAttachment({ attachment, isSender }) {
     attachment?.fileType === "image"
   ) {
     return (
-      <div className="mt-2 rounded-lg overflow-hidden border border-border">
+      <div className="mt-1 rounded-lg overflow-hidden border border-border/50">
         <img
           src={attachment?.fileUrl}
           alt="Image attachment"
-          className="w-full max-h-60 object-cover"
+          className="w-full max-h-72 object-cover bg-muted"
           loading="lazy"
+          decoding="async"
         />
         {attachment?.name && (
-          <div className={`text-xs p-2 ${isSender ? "bg-primary/90" : "bg-muted/90"}`}>
+          <div className={`text-xs px-2 py-1.5 truncate ${isSender ? "bg-black/20" : "bg-muted"}`}>
             {attachment.name}
           </div>
         )}
@@ -29,14 +30,15 @@ export default function MessageAttachment({ attachment, isSender }) {
   // For video attachments
   if (attachment?.fileType?.includes("video")) {
     return (
-      <div className="mt-2 rounded-lg overflow-hidden border border-border">
+      <div className="mt-1 rounded-lg overflow-hidden border border-border/50">
         <video
           src={attachment?.fileUrl}
           controls
-          className="w-full max-h-60 object-cover"
+          preload="metadata"
+          className="w-full max-h-72 bg-black"
         />
         {attachment?.name && (
-          <div className={`text-xs p-2 ${isSender ? "bg-primary/90" : "bg-muted/90"}`}>
+          <div className={`text-xs px-2 py-1.5 truncate ${isSender ? "bg-black/20" : "bg-muted"}`}>
             {attachment.name}
           </div>
         )}
@@ -46,20 +48,20 @@ export default function MessageAttachment({ attachment, isSender }) {
 
   // For other file types
   return (
-    <div className="mt-2">
+    <div className="mt-1">
       <a
         href={attachment?.fileUrl}
         target="_blank"
         rel="noreferrer"
         className={`flex items-center gap-2 p-3 rounded-lg ${
           isSender
-            ? "bg-primary text-primary-foreground hover:bg-primary/90"
-            : "bg-muted text-muted-foreground hover:bg-muted/90"
+            ? "bg-white/15 text-white hover:bg-white/25"
+            : "bg-muted text-foreground hover:bg-accent"
         } transition-colors`}
       >
-        <File size={18} />
-        <div className="flex-1 truncate">{attachment?.name}</div>
-        <Download size={16} />
+        <File size={18} className="flex-shrink-0" />
+        <div className="flex-1 min-w-0 truncate">{attachment?.name}</div>
+        <Download size={16} className="flex-shrink-0" />
       </a>
     </div>
   );

@@ -3,7 +3,8 @@ function generateColorFromName(name) {
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const color = `hsl(${hash % 360}, 70%, 70%)`; // Tạo màu HSL
+  // Mid lightness keeps white initials readable on top of the color
+  const color = `hsl(${Math.abs(hash) % 360}, 55%, 45%)`;
   return color;
 }
 
@@ -17,18 +18,16 @@ function timeDiff(time) {
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
 
-  if (days > 0) {
-    return `${days} days ago`;
+  if (days > 6) {
+    return new Date(time).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  } else if (days > 0) {
+    return days === 1 ? "Yesterday" : `${days} days ago`;
   } else if (hours > 0) {
-    return `${hours} hours ago`;
+    return `${hours}h ago`;
   } else if (minutes > 0) {
-    return `${minutes} minutes ago`;
-  } else {
-    if (seconds < 10) {
-      return `Just now`;
-    }
-    return `${seconds} seconds ago`;
+    return `${minutes}m ago`;
   }
+  return "Just now";
 }
 
 function showContent(content) {
@@ -53,4 +52,12 @@ function getHelloString() {
   }
 }
 
-export { generateColorFromName, timeDiff, showContent, getHelloString };
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.charAt(0) || "";
+  const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+  return (first + last).toUpperCase() || "?";
+}
+
+export { getInitials, generateColorFromName, timeDiff, showContent, getHelloString };

@@ -1,9 +1,7 @@
 "use client";
-import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, lazy, Suspense } from "react";
 import socket from "@/utils/socketClient";
 import useAuthStore from "@/store/authStore";
-import authService from "@/services/authService";
 import useChatStore from "@/store/chatStore";
 import usePerformance from "@/hooks/usePerformance";
 
@@ -20,83 +18,46 @@ const ComponentLoader = () => (
 );
 
 const HomePage = () => {
-  const { setUser } = useAuthStore();
-  const { currentRoomId } = useChatStore();
-  const router = useRouter();
-  const [isMobile, setIsMobile] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const currentRoomId = useChatStore((state) => state.currentRoomId);
+  // Stable key so re-ordering rooms (new message) doesn't re-join everything
+  const roomIdsKey = useChatStore((state) => state.rooms.map((room) => room._id).sort().join(","));
   const { scheduleWork } = usePerformance();
 
-  // Memoize mobile detection logic
-  const checkMobile = useCallback(() => {
-    setIsMobile(window.innerWidth < 768);
-  }, []);
-
-  // Debounced resize handler to reduce excessive calls
-  const debouncedResize = useMemo(() => {
-    let timeoutId;
-    return () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(checkMobile, 100);
-    };
-  }, [checkMobile]);
-
+  // The user is loaded once by AuthLayout; connect the socket when it's available
   useEffect(() => {
-    checkMobile();
-    window.addEventListener('resize', debouncedResize);
-    
+    if (!user?._id) return;
+
+    const handle = scheduleWork(() => socket.connect());
+
     return () => {
-      window.removeEventListener('resize', debouncedResize);
+      if (typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(handle);
+      }
+      socket.disconnect();
     };
-  }, [checkMobile, debouncedResize]);
+  }, [user?._id, scheduleWork]);
 
-  // Optimize authentication logic
+  // Join every room's channel; socket.io drops room membership on reconnect, so re-join then too
   useEffect(() => {
-    if (isInitialized) return;
-    
-    const initializeAuth = async () => {
-      try {
-        const data = await authService.getMe();
-        if (!data) return;
-        
-        const userData = data.data;
-        setUser({ user: userData, isAuthenticated: true });
-
-        // Use requestIdleCallback if available for socket connection
-        scheduleWork(() => {
-          socket.connect();
-          socket.emit("register", { userId: userData?._id });
-        });
-        
-        setIsInitialized(true);
-      } catch (error) {
-        console.log("Auth initialization error:", error);
-        setIsInitialized(true);
+    const joinRooms = () => {
+      if (!roomIdsKey) return;
+      for (const roomId of roomIdsKey.split(",")) {
+        socket.emit("join_room", { roomId });
       }
     };
 
-    initializeAuth();
+    if (socket.connected) joinRooms();
+    socket.on("connect", joinRooms);
+    return () => socket.off("connect", joinRooms);
+  }, [roomIdsKey]);
 
-    return () => {
-      if (socket.connected) {
-        socket.disconnect();
-      }
-    };
-  }, [setUser, isInitialized]);
-
-  // Memoize layout classes to prevent recalculation
-  const sidebarClasses = useMemo(() => 
-    `${isMobile ? (currentRoomId ? 'hidden' : 'flex w-full') : 'flex'} transition-all duration-300 ease-in-out`,
-    [isMobile, currentRoomId]
-  );
-
-  const chatWindowClasses = useMemo(() => 
-    `${isMobile ? (currentRoomId ? 'flex w-full' : 'hidden') : 'flex'} flex-1 transition-all duration-300 ease-in-out`,
-    [isMobile, currentRoomId]
-  );
+  // Responsive switching is pure CSS (md breakpoint) so there's no layout flash on load
+  const sidebarClasses = `${currentRoomId ? "hidden" : "flex"} w-full md:flex md:w-auto`;
+  const chatWindowClasses = `${currentRoomId ? "flex" : "hidden"} min-w-0 flex-1 md:flex`;
 
   return (
-    <div className="flex h-screen relative">
+    <div className="flex h-dvh overflow-hidden relative">
       {/* Mobile: Show sidebar only when no room selected, desktop: always show */}
       <div className={sidebarClasses}>
         <Suspense fallback={<ComponentLoader />}>

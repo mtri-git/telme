@@ -1,72 +1,91 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "@/utils/axios";
 
+const LIMIT = 30;
+
+// Messages are kept newest-first.
 const useMessage = (roomId) => {
-    const limit = 100;
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [hasMore, setHasMore] = useState(true);
-    const [page, setPage] = useState(1);
+    // Ignore responses that arrive after the user has switched to another room
+    const activeRoomRef = useRef(roomId);
+    activeRoomRef.current = roomId;
 
     const fetchMessages = useCallback(async () => {
         if (!roomId) return;
         setLoading(true);
+        setError(null);
         try {
             const response = await axios.get(`/messages/rooms/${roomId}`, {
-                params: {
-                    page: 1,
-                    limit,
-                },
+                params: { limit: LIMIT },
             });
-            setMessages([...response.data.data])
-            setHasMore(response.data.data.length === limit);
-            setPage((prev) => prev + 1);
+            if (activeRoomRef.current !== roomId) return;
+            const data = response.data.data || [];
+            setMessages(data);
+            setHasMore(data.length === LIMIT);
         } catch (error) {
-            setError(error.message || "Error fetching messages");
+            if (activeRoomRef.current !== roomId) return;
+            setError(error?.response?.data?.message || error.message || "Error fetching messages");
         } finally {
-            setLoading(false);
+            if (activeRoomRef.current === roomId) setLoading(false);
         }
     }, [roomId]);
 
     useEffect(() => {
+        // Clear the previous room's messages so they don't flash while loading
+        setMessages([]);
+        setHasMore(true);
         if (!roomId) return;
-            
+
         fetchMessages();
     }, [fetchMessages, roomId]);
 
-    const addNewMessage = (message) => {
+    const addNewMessage = useCallback((message) => {
         setMessages((prev) => [message, ...prev]);
-    };
+    }, []);
 
-    const loadMoreMessage = () => {
-        if (!roomId) return;
-        if (loading || !hasMore) return;
+    const updateMessage = useCallback((id, patch) => {
+        setMessages((prev) =>
+            prev.map((message) => (message._id === id ? { ...message, ...patch } : message))
+        );
+    }, []);
+
+    // Cursor pagination: ask for messages older than the oldest one we already have,
+    // so messages arriving in the meantime can't shift pages and cause duplicates
+    const loadMoreMessage = useCallback(() => {
+        if (!roomId || loading || !hasMore) return;
+
+        const oldest = messages[messages.length - 1];
+        if (!oldest?.created_at) return;
 
         setLoading(true);
         axios
             .get(`/messages/rooms/${roomId}`, {
                 params: {
-                    page,
-                    limit,
+                    limit: LIMIT,
+                    before: new Date(oldest.created_at).toISOString(),
                 },
             })
             .then((response) => {
-                setMessages((prev) => [...prev, ...response.data.data]);
-                setHasMore(response.data.data.length === limit);
-                setPage((prev) => prev + 1);
+                if (activeRoomRef.current !== roomId) return;
+                const data = response.data.data || [];
+                setMessages((prev) => {
+                    const seen = new Set(prev.map((m) => String(m._id)));
+                    return [...prev, ...data.filter((m) => !seen.has(String(m._id)))];
+                });
+                setHasMore(data.length === LIMIT);
             })
             .catch((error) => {
-                setError(error.message || "Error fetching messages");
+                setError(error?.response?.data?.message || error.message || "Error fetching messages");
             })
             .finally(() => {
-                setLoading(false);
+                if (activeRoomRef.current === roomId) setLoading(false);
             });
-    }
+    }, [roomId, loading, hasMore, messages]);
 
-
-
-    return { messages, loading, error, hasMore, addNewMessage, fetchMessages, loadMoreMessage };
+    return { messages, loading, error, hasMore, addNewMessage, updateMessage, fetchMessages, loadMoreMessage };
 }
 
 export default useMessage;

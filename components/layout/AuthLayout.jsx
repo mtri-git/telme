@@ -12,7 +12,7 @@ export default function AuthLayout({ children }) {
   }, [init]);
 
   if (isLoading) {
-    return <Loading />;
+    return <Loading className="h-dvh" />;
   }
 
   if (!isAuthenticated && typeof window !== 'undefined') {

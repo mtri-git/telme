@@ -1,74 +1,27 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { createContext, useContext } from "react";
 import authService from "../services/authService";
+import useAuthStore from "@/store/authStore";
 
 const AuthContext = createContext();
 
-const ACTIONS = {
-  SET_USER: "SET_USER",
-  LOGOUT: "LOGOUT",
-};
-
-const authReducer = (state, action) => {
-  switch (action.type) {
-    case ACTIONS.SET_USER:
-      return {
-        ...state,
-        user: action.payload.user,
-        isAuthenticated: true,
-      };
-    case ACTIONS.LOGOUT:
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-      };
-    default:
-      return state;
-  }
-};
-
-const initialState = {
-  user: null,
-  isAuthenticated: false,
-};
-
+// Thin wrapper over the auth store so there's a single source of truth
+// (the store is initialised once by AuthLayout; no extra /users/me calls here).
 export const AuthProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState);
-  const router = useRouter();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await authService.getMe();
-        if (response?.data) {
-          dispatch({
-            type: ACTIONS.SET_USER,
-            payload: { user: response.data },
-          });
-        } else {
-          // router.push("/login");
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        // router.push("/login");
-      }
-    };
-
-    fetchUser();
-  }, [router]);
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const clearUser = useAuthStore((state) => state.logout);
 
   // Hàm đăng xuất
   const logout = () => {
-    authService.logout(); // Gọi API logout nếu cần
-    dispatch({ type: ACTIONS.LOGOUT });
-    router.push("/login");
+    clearUser();
+    authService.logout();
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, dispatch, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );

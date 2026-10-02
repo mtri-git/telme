@@ -65,25 +65,24 @@ axiosInstance.interceptors.response.use(
         const { data } = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + REFRESH_TOKEN_URL, { refreshToken });
         const responseData = data.data
 
-        localStorage.setItem(LOCAL_STORAGE_KEY.accessToken, responseData.tokens.accessToken);
+        const newAccessToken = responseData.tokens.accessToken;
+        localStorage.setItem(LOCAL_STORAGE_KEY.accessToken, newAccessToken);
         localStorage.setItem(LOCAL_STORAGE_KEY.refreshToken, responseData.tokens.refreshToken);
 
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
-
-        processQueue(null, data.accessToken);
+        processQueue(null, newAccessToken);
 
         return axiosInstance(originalRequest);
       } catch (err) {
-        console.log("🚀 ~ err:", err)
         processQueue(err, null);
 
         localStorage.removeItem(LOCAL_STORAGE_KEY.accessToken);
         localStorage.removeItem(LOCAL_STORAGE_KEY.refreshToken);
         localStorage.removeItem(LOCAL_STORAGE_KEY.userInfo);
 
-        if (typeof window !== "undefined") {
-          // window.location.href = "/login";
-          console.log("Redirect to login page");
+        // Session can't be recovered: send the user to log in again
+        const publicPaths = ["/login", "/register"];
+        if (typeof window !== "undefined" && !publicPaths.includes(window.location.pathname)) {
+          window.location.href = "/login";
         }
 
         return Promise.reject(err);

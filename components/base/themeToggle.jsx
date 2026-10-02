@@ -1,33 +1,43 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-const ThemeToggle = () => {
-  const [theme, setTheme] = useState("light");
+const ThemeToggle = ({ className }) => {
+  const [theme, setTheme] = useState(null);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.classList.toggle("dark", savedTheme === "dark");
-    }
+    // The inline script in the root layout has already applied the theme class
+    setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
+    const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
     document.documentElement.classList.toggle("dark", newTheme === "dark");
-    localStorage.setItem("theme", newTheme);
+    try {
+      localStorage.setItem("theme", newTheme);
+    } catch {}
   };
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={toggleTheme}
-      className="p-2 bg-muted rounded-full text-foreground shadow-md hover:bg-muted/80 transition-colors"
-      aria-label="Toggle Theme"
+      className={cn("h-8 w-8 rounded-full text-muted-foreground hover:text-foreground", className)}
+      aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
     >
-      {theme === "light" ? "🌞" : "🌙"}
-    </button>
+      {theme === "dark" ? <Moon /> : <Sun />}
+    </Button>
   );
 };
+
+export const FloatingThemeToggle = () => (
+  <div className="fixed top-3 right-3 z-50 rounded-full bg-card/80 backdrop-blur border border-border shadow-sm">
+    <ThemeToggle />
+  </div>
+);
 
 export default ThemeToggle;

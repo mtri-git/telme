@@ -10,7 +10,7 @@ import {
   VideoIcon,
   VideoOffIcon,
 } from "lucide-react";
-import socket from "@/utils/socketClient";
+import socket, { socketAuth } from "@/utils/socketClient";
 import { LOCAL_STORAGE_KEY } from "@/constants/localStorage";
 import { useRouter } from "next/navigation";
 
@@ -25,7 +25,10 @@ const VideoConference = ({ roomId }) => {
   const router = useRouter();
 
   useEffect(() => {
-    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL);
+    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
+      transports: ["websocket"],
+      auth: socketAuth,
+    });
 
     const userData = JSON.parse(
       localStorage.getItem(LOCAL_STORAGE_KEY.userInfo)
@@ -35,7 +38,6 @@ const VideoConference = ({ roomId }) => {
         userId: userData?._id,
       });
     };
-    console.log("🚀 ~ useEffect ~ userData:", userData);
 
     socket.connect();
     socket.on("connect", handleRegister);

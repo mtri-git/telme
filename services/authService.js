@@ -1,6 +1,7 @@
 import { LOCAL_STORAGE_KEY } from "@/constants/localStorage";
 import axios from "axios";
 import axiosInstance from "@/utils/axios";
+import socket from "@/utils/socketClient";
 
 const localAxios = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -27,11 +28,8 @@ const login = async (email, password) => {
     );
     localStorage.setItem(LOCAL_STORAGE_KEY.userInfo, JSON.stringify(data.user));
 
-    localAxios.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
-
     return data;
   } catch (err) {
-    console.log("🚀 ~ login ~ err:", err);
     throw err;
   }
 };
@@ -40,6 +38,8 @@ const logout = async () => {
   try {
     localStorage.removeItem(LOCAL_STORAGE_KEY.accessToken);
     localStorage.removeItem(LOCAL_STORAGE_KEY.refreshToken);
+    localStorage.removeItem(LOCAL_STORAGE_KEY.userInfo);
+    if (socket.connected) socket.disconnect();
     window.location.href = "/login";
   } catch (err) {
     throw err;
